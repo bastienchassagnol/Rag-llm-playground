@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/index.html</loc>
+    <lastmod>2026-09-07T15:51:04.983Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/theory/llm-basics.html</loc>
+    <lastmod>2026-09-07T15:49:20.943Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/theory/tools-vs-agents.html</loc>
+    <lastmod>2026-09-07T15:51:02.952Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/python/llm-tool-calling.html</loc>
+    <lastmod>2026-09-07T15:49:43.675Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/python/basic-mcp-server.html</loc>
+    <lastmod>2026-09-07T15:51:02.397Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/R/llm-integration.html</loc>
+    <lastmod>2026-09-07T15:51:44.503Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/R/r-vs-python.html</loc>
+    <lastmod>2026-09-07T15:51:05.923Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bastienchassagnol.github.io/Rag-llm-playground/llm-course.pdf</loc>
+    <lastmod>2026-09-07T16:01:57.259Z</lastmod>
+  </url>
+</urlset>

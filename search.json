@@ -1,0 +1,405 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "LLMs, tools, and agents",
+    "section": "",
+    "text": "0.1 How to read this book\nThese notes are a draft course on large language models (LLMs). The first half is conceptual. The second half is practical: the same ideas in Python, then in R, then a side-by-side comparison.\nThe book layout follows the Quarto book pattern used in BAUDOTlab/teaching_material (HTML site plus a downloadable PDF).\nLive API calls are not evaluated at render time. Copy the chunks into your own session after you have set a provider key.\n%%{init: {'theme': 'sandstone'}}%%\nflowchart TD\n  T[\"Theory: how LLMs work\"] --&gt; P[\"Patterns: RAG, MCP, agents\"]\n  P --&gt; Py[\"Python: tools and MCP\"]\n  P --&gt; R[\"R: ellmer chat, structure, tools\"]\n  Py --&gt; C[\"R versus Python\"]\n  R --&gt; C\n\n\n\n\n\n\n\n\n\nFigure 1: Course pipeline: theory, then two implementation tracks, then a comparison.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#sec-how-to-read",
+    "href": "index.html#sec-how-to-read",
+    "title": "LLMs, tools, and agents",
+    "section": "",
+    "text": "Theory. Tokens, next-token prediction, and why models hallucinate (LLM basics). Then three patterns that are often confused: MCP, RAG, and agents (Tools versus agents).\nPython. Tool calling from a script, then a minimal MCP server you can attach to a host such as Cursor.\nR. A condensed ellmer workshop, adapted from Hadley Wickham’s A no bullshit guide to LLMs (useR! 2025 / Tidy Design, 2026), then R versus Python.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#sec-build",
+    "href": "index.html#sec-build",
+    "title": "LLMs, tools, and agents",
+    "section": "0.2 Build locally",
+    "text": "0.2 Build locally\nFrom the repository root:\nquarto render          # HTML and PDF under docs/\nquarto preview         # live HTML preview\nRequirements: Quarto 1.8 or newer, plus a LaTeX engine (tinytex or TeX Live) for the PDF.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#sec-map",
+    "href": "index.html#sec-map",
+    "title": "LLMs, tools, and agents",
+    "section": "0.3 Repository map",
+    "text": "0.3 Repository map\n.\n├── theory/                 # conceptual chapters\n├── python/\n│   ├── llm-tool-calling/   # lab: provider SDK + tools\n│   └── basic-mcp-server/   # lab: tiny MCP server\n├── R/\n│   └── llm-integration/    # lab: ellmer scripts\n├── figures/                # shared images\n└── docs/                   # rendered HTML and PDF",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Welcome</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html",
+    "href": "theory/llm-basics.html",
+    "title": "2  LLM basics",
+    "section": "",
+    "text": "2.1 What an LLM actually does\nThis chapter is a compact map of how large language models behave in practice. It is not a substitute for a deep-learning textbook. The goal is enough vocabulary to read the rest of the course without treating the model as magic.\nA modern LLM is a next-token predictor. Given a sequence of tokens (pieces of text), it assigns probabilities to possible next tokens and samples from that distribution. Training on a huge corpus makes the distribution rich enough that the same mechanism can summarise, translate, write code, or refuse a request — all as more text.\nThat framing has three immediate consequences:",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-what",
+    "href": "theory/llm-basics.html#sec-what",
+    "title": "2  LLM basics",
+    "section": "",
+    "text": "There is no built-in world clock. Unless a tool or a retrieval step injects facts, the model only has what is in the prompt plus what was frozen into the weights.\nThere is no built-in calculator. Arithmetic and counting are not guaranteed; they are patterns the model may or may not reproduce. Hadley Wickham’s counting examples (letters in a word, large multiplications) are the same point in comic form (A no bullshit guide to LLMs).\nAnswers look finished even when they are guesses. Models are trained to continue fluently. They rarely volunteer “I do not know” unless the system prompt or the product layer forces it.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-tokens",
+    "href": "theory/llm-basics.html#sec-tokens",
+    "title": "2  LLM basics",
+    "section": "2.2 Tokens, context, and cost",
+    "text": "2.2 Tokens, context, and cost\nText is chopped into tokens (sub-word pieces). Context windows are measured in tokens, not characters. Everything you send — system instructions, conversation history, retrieved documents, tool schemas, images encoded as tokens — shares that budget.\nPractical habits:\n\nPut stable instructions in a system prompt (tone, role, output schema). Put the variable task in the user turn.\nPrefer structured outputs (JSON / a typed schema) when you will parse the reply in code. See the R lab in LLM integration.\nTreat cost as tokens in plus tokens out. A five-dollar API credit is enough for a first course lab; it is not enough for an unbounded agent loop.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-train-infer",
+    "href": "theory/llm-basics.html#sec-train-infer",
+    "title": "2  LLM basics",
+    "section": "2.3 Training versus inference",
+    "text": "2.3 Training versus inference\n\n\n\n\n\n\n\n\nStage\nWhat happens\nWhat you control in this course\n\n\n\n\nPre-training\nPredict the next token on web-scale text\nNothing (you use a hosted model)\n\n\nPost-training\nInstruction following, tool use, safety\nChoose the model family\n\n\nInference\nSample tokens for your prompt\nPrompt, tools, retrieval, temperature\n\n\n\nYou will almost never fine-tune a foundation model here. You will steer one: prompts, tools, and retrieved context.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-hallucination",
+    "href": "theory/llm-basics.html#sec-hallucination",
+    "title": "2  LLM basics",
+    "section": "2.4 Hallucination is a feature of the objective",
+    "text": "2.4 Hallucination is a feature of the objective\nIf the most likely continuation is a confident-looking citation that does not exist, the model may emit it. Grounding strategies do not make the sampler honest; they change the prompt:\n\nRAG inserts retrieved passages so the likely continuation is “according to this excerpt…” (next chapter).\nTools let the model request a fact (the date, a SQL query) instead of inventing it.\nStructured extraction plus human or statistical checks treats the model as a noisy sensor, not as an oracle.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-jagged",
+    "href": "theory/llm-basics.html#sec-jagged",
+    "title": "2  LLM basics",
+    "section": "2.5 The jagged edge",
+    "text": "2.5 The jagged edge\nCapability is uneven. The same model can draft a working regular expression and then miscount letters in unconventional. Product teams paper over embarrassing failure modes with extra prompt rules; those patches move, so evals on your task matter more than a leaderboard screenshot.\nA useful mental split for coding (again after Wickham):\n\nTranslation (clear spec in one form → another form) is often a win: curl to httr2, SQL to dplyr, a sketch to a Shiny skeleton.\nOpen-ended design (vague goal, many constraints) is where agent loops shine and where they waste tokens.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/llm-basics.html#sec-next",
+    "href": "theory/llm-basics.html#sec-next",
+    "title": "2  LLM basics",
+    "section": "2.6 Where we go next",
+    "text": "2.6 Where we go next\nThe next chapter separates three architectures that marketing copy lumps together: MCP (how apps talk to tools), RAG (how a query fetches documents), and agents (a plan–act–observe loop). They compose; they are not alternatives to “using an LLM”.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>LLM basics</span>"
+    ]
+  },
+  {
+    "objectID": "theory/tools-vs-agents.html",
+    "href": "theory/tools-vs-agents.html",
+    "title": "3  MCP, RAG, and AI agents",
+    "section": "",
+    "text": "3.1 MCP: a standard way to plug tools in\nMCP, RAG, and agents are often sold as competing products. They are three layers. MCP is connectivity. RAG is retrieval. An agent is a control loop. One application can use all three.\nThe diagram below (ByteByteGo) is the course’s reference picture. Read the three columns left to right: plumbing, then a single grounded answer, then an iterative worker.\nMCP is an open standard protocol. It connects AI models to external tools and data sources. These can be APIs, databases, or apps like Gmail, Slack, or GitHub. So instead of you writing the integration or doing the integration for each of these applications separately, MCP basically gives you a standard way to connect to these systems.\nIn Figure 3.1 the host (Claude Desktop, an IDE, an agent app) is an MCP client. It speaks one protocol to many MCP servers. Each server then does the proprietary work: call GitHub, query Postgres, read a folder.\nThat is why MCP shows up in this course after “tool calling” in Python. A tool is a function plus metadata. MCP is how that function is discovered and invoked across process boundaries, instead of being hard-wired into one notebook.\nSee the official specification at modelcontextprotocol.io. A minimal server lives in python/basic-mcp-server/.\n%%{init: {'theme': 'sandstone'}}%%\nflowchart TD\n  H[\"MCP host: IDE, desktop, agent\"] --&gt; C[\"MCP client\"]\n  C --&gt;|\"MCP protocol\"| SA[\"Server A: APIs\"]\n  C --&gt; SB[\"Server B: database\"]\n  C --&gt; SC[\"Server C: files\"]\n\n\n\n\n\n\n\n\n\nFigure 3.2: One protocol, many servers: hosts stay interchangeable; integrations live behind MCP servers.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>MCP, RAG, and AI agents</span>"
+    ]
+  },
+  {
+    "objectID": "theory/tools-vs-agents.html#sec-rag",
+    "href": "theory/tools-vs-agents.html#sec-rag",
+    "title": "3  MCP, RAG, and AI agents",
+    "section": "3.2 RAG: fetch context when the question arrives",
+    "text": "3.2 RAG: fetch context when the question arrives\nIn RAG, the model pulls the fresh information when a query comes. And this is why the model does not have to make stuff up on its own, but instead it fetches the fresh information from external data sources, like docs, PDFs, and databases, to give the most up-to-date answer to the prompt.\nThe numbered path in the middle of Figure 3.1 is a request–response pipeline:\n\nThe user asks a question.\nA retriever searches an index (embeddings, lexical search, or both).\nRelevant chunks come back from the knowledge base.\nQuestion plus chunks go to the LLM.\nThe LLM writes an answer grounded in that context.\n\nRAG does not, by itself, let the model send an email or delete a file. It changes what is in the prompt. If the index is stale, the answer is stale. If retrieval misses the right passage, the model may still invent a fluent gap-filler — which is why citations and chunk inspection belong in any serious RAG lab.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>MCP, RAG, and AI agents</span>"
+    ]
+  },
+  {
+    "objectID": "theory/tools-vs-agents.html#sec-agents",
+    "href": "theory/tools-vs-agents.html#sec-agents",
+    "title": "3  MCP, RAG, and AI agents",
+    "section": "3.3 Agents: pursue a goal, not a single reply",
+    "text": "3.3 Agents: pursue a goal, not a single reply\nAn AI agent is kind of an AI system where the agent performs the task autonomously and takes the decisions. And then making sure everything is working fine, instead of a chatbot, which is really a request-response.\nThe right-hand column of Figure 3.1 is a loop: goal → plan → act → observe → re-plan, until a stopping condition. The “act” step is tool use against APIs, files, apps, databases, or memory.\nHadley Wickham’s one-line definition is enough for the R lab: an agent is a chatbot with at least one read tool and one write tool (A no bullshit guide to LLMs). Listing files then deleting CSVs is already an agent — and already a security problem. Treat “YOLO” file deletion as a teaching example, not a production pattern.\n\n%%{init: {'theme': 'sandstone'}}%%\nflowchart LR\n  G[\"Goal\"] --&gt; P[\"Plan\"]\n  P --&gt; A[\"Act with tools\"]\n  A --&gt; O[\"Observe\"]\n  O --&gt; R{\"Done?\"}\n  R --&gt;|no| P\n  R --&gt;|yes| X[\"Result\"]\n\n\n\n\n\n\n\n\n\nFigure 3.3: Agent control loop: choose an action, observe the environment, update the plan.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>MCP, RAG, and AI agents</span>"
+    ]
+  },
+  {
+    "objectID": "theory/tools-vs-agents.html#sec-choose",
+    "href": "theory/tools-vs-agents.html#sec-choose",
+    "title": "3  MCP, RAG, and AI agents",
+    "section": "3.4 How to choose",
+    "text": "3.4 How to choose\n\n\n\n\n\n\n\nNeed\nPattern\n\n\n\n\nThe answer lives in your documents\nRAG\n\n\nThe model must call many existing apps\nMCP (or equivalent tool gateway)\n\n\nThe task needs several steps and checks\nAgent loop\n\n\nOne shot: classify, extract, rewrite\nPlain chat (maybe structured output)\n\n\n\nCompose rather than pick a camp. A coding agent in Cursor is an agent host that speaks MCP to servers; it may also RAG over the repository. A RAG chatbot with no tools is still just request–response.\nThe Python chapters implement a tool and an MCP server. The R chapter implements the same ideas inside ellmer.",
+    "crumbs": [
+      "Theory",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>MCP, RAG, and AI agents</span>"
+    ]
+  },
+  {
+    "objectID": "python/llm-tool-calling.html",
+    "href": "python/llm-tool-calling.html",
+    "title": "4  Python: LLM tool calling",
+    "section": "",
+    "text": "4.1 Setup\nThis chapter is the Python counterpart of the R ellmer lab. A tool is still a function plus a JSON schema the model can request. The provider does not run your Python. It returns a tool call; your process executes it and sends the result back.\nRunnable copy: python/llm-tool-calling/.\nUse uv (see the project Python notes). Do not call pip install from a notebook that might run at check time.",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python: LLM tool calling</span>"
+    ]
+  },
+  {
+    "objectID": "python/llm-tool-calling.html#sec-py-setup",
+    "href": "python/llm-tool-calling.html#sec-py-setup",
+    "title": "4  Python: LLM tool calling",
+    "section": "",
+    "text": "cd python/llm-tool-calling\nuv venv\nuv add anthropic python-dotenv\nexport ANTHROPIC_API_KEY=\"…\"   # or OPENAI_API_KEY",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python: LLM tool calling</span>"
+    ]
+  },
+  {
+    "objectID": "python/llm-tool-calling.html#sec-py-tool",
+    "href": "python/llm-tool-calling.html#sec-py-tool",
+    "title": "4  Python: LLM tool calling",
+    "section": "4.2 Chat, then a tool",
+    "text": "4.2 Chat, then a tool\nThe today tool is deliberately tiny: it exists because the model has no clock. The multiply tool exists because next-token prediction is a bad calculator.\n# python/llm-tool-calling/tool_calling.py\nfrom datetime import date\n\nfrom anthropic import Anthropic\n\nTOOLS = [\n    {\n        \"name\": \"today\",\n        \"description\": \"Return today's date in ISO format.\",\n        \"input_schema\": {\n            \"type\": \"object\",\n            \"properties\": {},\n            \"additionalProperties\": False,\n        },\n    },\n    {\n        \"name\": \"multiply\",\n        \"description\": \"Multiply two numbers exactly.\",\n        \"input_schema\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"a\": {\"type\": \"number\"},\n                \"b\": {\"type\": \"number\"},\n            },\n            \"required\": [\"a\", \"b\"],\n        },\n    },\n]\n\n\ndef run_tool(name: str, args: dict) -&gt; str:\n    if name == \"today\":\n        return date.today().isoformat()\n    if name == \"multiply\":\n        return str(args[\"a\"] * args[\"b\"])\n    raise ValueError(f\"unknown tool: {name}\")\n\n\ndef chat_with_tools(prompt: str) -&gt; str:\n    client = Anthropic()\n    messages = [{\"role\": \"user\", \"content\": prompt}]\n    while True:\n        resp = client.messages.create(\n            model=\"claude-sonnet-4-5\",\n            max_tokens=1024,\n            tools=TOOLS,\n            messages=messages,\n        )\n        if resp.stop_reason != \"tool_use\":\n            return \"\".join(\n                b.text for b in resp.content if b.type == \"text\"\n            )\n        tool_results = []\n        for block in resp.content:\n            if block.type != \"tool_use\":\n                continue\n            output = run_tool(block.name, block.input)\n            tool_results.append(\n                {\n                    \"type\": \"tool_result\",\n                    \"tool_use_id\": block.id,\n                    \"content\": output,\n                }\n            )\n        messages.append({\"role\": \"assistant\", \"content\": resp.content})\n        messages.append({\"role\": \"user\", \"content\": tool_results})\nThe while loop is the seed of an agent: observe a tool request, act locally, send the observation back. MCP later standardises how those tools are advertised to a host.",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python: LLM tool calling</span>"
+    ]
+  },
+  {
+    "objectID": "python/llm-tool-calling.html#sec-py-try",
+    "href": "python/llm-tool-calling.html#sec-py-try",
+    "title": "4  Python: LLM tool calling",
+    "section": "4.3 Try",
+    "text": "4.3 Try\nprint(chat_with_tools(\"What day is it today?\"))\nprint(chat_with_tools(\"What is 384729 * 918273?\"))\nCompare with R: LLM integration: same round trip, different SDK. The comparison chapter (R versus Python) lists when you might wrap this loop in LangChain, or skip it and speak MCP instead.",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python: LLM tool calling</span>"
+    ]
+  },
+  {
+    "objectID": "python/basic-mcp-server.html",
+    "href": "python/basic-mcp-server.html",
+    "title": "5  Python: a minimal MCP server",
+    "section": "",
+    "text": "5.1 Run\nMCP is the host–server contract from MCP, RAG, and agents. Your IDE (the host) already knows how to list tools, call them, and show the transcript. You write a server that exposes resources and tools.\nThis lab is intentionally small: one tool that echoes a greeting, one that returns the working directory. Production servers add auth, timeouts, and allow-lists.\nProject files: python/basic-mcp-server/.\nPoint a host at the server over stdio (the usual desktop pattern). In Cursor, add an MCP server entry whose command is uv run python server.py with this folder as the working directory. The host then lists hello and pwd like any other tool.",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Python: a minimal MCP server</span>"
+    ]
+  },
+  {
+    "objectID": "python/basic-mcp-server.html#sec-mcp-run",
+    "href": "python/basic-mcp-server.html#sec-mcp-run",
+    "title": "5  Python: a minimal MCP server",
+    "section": "",
+    "text": "cd python/basic-mcp-server\nuv venv\nuv add mcp\nuv run python server.py",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Python: a minimal MCP server</span>"
+    ]
+  },
+  {
+    "objectID": "python/basic-mcp-server.html#sec-mcp-server",
+    "href": "python/basic-mcp-server.html#sec-mcp-server",
+    "title": "5  Python: a minimal MCP server",
+    "section": "5.2 Server sketch",
+    "text": "5.2 Server sketch\n# python/basic-mcp-server/server.py\nfrom pathlib import Path\n\nfrom mcp.server.fastmcp import FastMCP\n\nmcp = FastMCP(\"course-demo\")\n\n\n@mcp.tool()\ndef hello(name: str = \"world\") -&gt; str:\n    \"\"\"Return a short greeting. Useful as a smoke test for the host.\"\"\"\n    return f\"Hello, {name}.\"\n\n\n@mcp.tool()\ndef pwd() -&gt; str:\n    \"\"\"Return the server process working directory.\"\"\"\n    return str(Path.cwd())\n\n\nif __name__ == \"__main__\":\n    mcp.run()",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Python: a minimal MCP server</span>"
+    ]
+  },
+  {
+    "objectID": "python/basic-mcp-server.html#sec-mcp-not",
+    "href": "python/basic-mcp-server.html#sec-mcp-not",
+    "title": "5  Python: a minimal MCP server",
+    "section": "5.3 What this is not",
+    "text": "5.3 What this is not\n\nNot RAG: there is no index and no chunking.\nNot a full agent: the host decides the loop; this process only answers tool calls.\nNot a replacement for the Anthropic/OpenAI SDK lab. MCP shines when several apps must share the same tools without each notebook reimplementing GitHub, Slack, or Gmail.\n\nNext: the same mental model in R with ellmer (LLM integration).",
+    "crumbs": [
+      "Python",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Python: a minimal MCP server</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html",
+    "href": "R/llm-integration.html",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "",
+    "text": "6.1 Why bother, given that models “kind of suck”\nThis lab is a short R track. It compresses Hadley Wickham’s A no bullshit guide to LLMs (talk at useR! 2025; written up on Tidy Design, September 2026). Read that essay for tone and stories. Here we keep only the mechanisms you will type.\nPackage docs: ellmer. Scripts: R/llm-integration/.\nWickham’s opening is the right lab safety briefing:\nAnd yet the same sampler writes a limerick, extracts a table from photos, and drives a quiz. The course stance is yes, and: treat the model as a biased, noisy function, then wrap it with structure and tools.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-suck",
+    "href": "R/llm-integration.html#sec-suck",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "",
+    "text": "Results are stochastic; the same prompt can count letters three different ways.\nModels change under you (product patches, not sudden intelligence).\nThe jagged edge: fluent and wrong on easy tasks; surprisingly good on messy language.\nOutputs look complete. Doubt is rare unless you demand a schema or a tool.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-chat",
+    "href": "R/llm-integration.html#sec-chat",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.2 1. Chat objects",
+    "text": "6.2 1. Chat objects\nellmer is chat in R without copying from a browser. A system prompt sets tone for the whole object (terse, quiz-master, JSON only). You cannot always do that in a consumer web UI.\n# R/llm-integration/01_chat.R\nlibrary(ellmer)\n\nchat &lt;- chat_anthropic(\n  system_prompt = \"Be terse. Prefer R examples.\"\n)\nchat$chat(\"Who are you?\")\nSwitch provider with chat_openai(), chat_google_gemini(), and friends. The object stores history; later turns see earlier ones.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-structure",
+    "href": "R/llm-integration.html#sec-structure",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.3 2. Structured data: turn mess into rectangles",
+    "text": "6.3 2. Structured data: turn mess into rectangles\nData scientists already work with rectangles. The high-leverage move is to force a schema (animal name, background colour, …) so the reply is a data frame, not a paragraph. Images go in with content_image_file(). Variation across repeats is expected; kitten versus cat is often a labelling problem, not a bug.\nOnce you have a table, ordinary statistics apply: measurement error is assumed, not a scandal. For systematic checks, Wickham points to Simon Couch’s vitals package (evals, in the LLM sense).\n# Sketch — check current ellmer helpers before class\n# (APIs move; see https://ellmer.tidyverse.org/)\nchat &lt;- chat_anthropic()\n# chat$chat_structured(\n#   content_image_file(\"animals/kitten.jpg\"),\n#   type = type_object(\n#     animal = type_string(\"Common name of the animal.\"),\n#     background = type_string(\"Dominant background colour.\")\n#   )\n# )",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-tools",
+    "href": "R/llm-integration.html#sec-tools",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.4 3. Tools: function plus metadata",
+    "text": "6.4 3. Tools: function plus metadata\nThe model has no clock and must not invent one. A tool is an R function plus a description (and argument types). The provider never runs R on its servers: it returns “please call today”; ellmer runs Sys.Date() on your machine and sends the string back.\n# R/llm-integration/02_tools.R\nlibrary(ellmer)\n\nchat &lt;- chat_anthropic()\nchat$register_tool(tool(\n  fun = \\( ) as.character(Sys.Date()),\n  name = \"today\",\n  description = \"Return today's date (ISO).\"\n))\nchat$register_tool(tool(\n  fun = \\(a, b) a * b,\n  name = \"multiply\",\n  description = \"Multiply two numbers exactly.\",\n  arguments = list(\n    a = type_number(),\n    b = type_number()\n  )\n))\nchat$chat(\"What day is it? What is 384729 * 918273?\")\nThat is the same round trip as Python tool calling.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-ellmer-agents",
+    "href": "R/llm-integration.html#sec-ellmer-agents",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.5 4. Agents, in one line",
+    "text": "6.5 4. Agents, in one line\nWickham: agent = chatbot + a read tool + a write tool. list.files() plus file.remove() is enough to delete every CSV in the working directory after the model looks. That is the demonstration and the warning. Guardrails today are thin (“YOLO”). Do not register destructive tools on a shared project folder.\nThe theory chapter (MCP, RAG, and agents) places this loop next to MCP and RAG so it is not confused with “chat that retrieves PDFs”.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-coding",
+    "href": "R/llm-integration.html#sec-coding",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.6 5. Coding with LLMs",
+    "text": "6.6 5. Coding with LLMs\nFour product shapes, increasing in coupling:\n\nWeb chat (copy-paste; goes stale like Excel → Word).\nInline autocomplete (skill: ignore the bad completions).\nIn-IDE chat (same model, more file context).\nAgentic coding (Cursor, Claude Code, …): write, test, iterate.\n\nTwo clear wins Wickham emphasises — keep these as lab exercises:\n\nTranslation when the spec is already complete: curl → httr2, SQL → dplyr, LaTeX → Quarto, a UI sketch → a Shiny first draft. Iterate when the first draft is wrong (his penguins app).\nLower activation energy: a bad first draft you are willing to fix; a four-year testthat issue you finally throw an agent at; a domain you do not know yet. Claude’s line, quoted in the essay: models make the cost of trying low enough that you attempt work you would otherwise postpone.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-concerns",
+    "href": "R/llm-integration.html#sec-concerns",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.7 Concerns, without the TED-talk padding",
+    "text": "6.7 Concerns, without the TED-talk padding\nFrom the same essay, stripped to lab policy:\n\nAccess: start with a small API budget or Gemini’s free tier.\nEnvironment: individual chat queries are tiny next to a flight; still do not run idle agent loops for fun.\nPrivacy: do not paste confidential patient or unpublished data into a consumer endpoint. Institutions already negotiate cloud contracts; you personally may not have those terms.\nPower: the essay’s “evil billionaires” aside is political, not a package API. For the course: know who hosts the weights and what they log.\n\nWickham’s closer is the course closer too: one small experiment beats doomscrolling. Models are not about to replace a working statistician who can specify a schema, read a residual plot, and refuse a bad tool.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/llm-integration.html#sec-try",
+    "href": "R/llm-integration.html#sec-try",
+    "title": "6  R: LLM integration with ellmer",
+    "section": "6.8 Try this session",
+    "text": "6.8 Try this session\n\nchat$chat() with a terse system prompt.\nRegister today and multiply; ask a combined question.\nOptional: structured extraction on two images; bind rows; notice disagreement.\nDo not register rm unless you are in a throwaway temp directory (withr::local_tempdir()).",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>R: LLM integration with ellmer</span>"
+    ]
+  },
+  {
+    "objectID": "R/r-vs-python.html",
+    "href": "R/r-vs-python.html",
+    "title": "7  R versus Python",
+    "section": "",
+    "text": "7.1 What stays the same\nSame model, different glue. This chapter is a map, not a winner.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>R versus Python</span>"
+    ]
+  },
+  {
+    "objectID": "R/r-vs-python.html#sec-same",
+    "href": "R/r-vs-python.html#sec-same",
+    "title": "7  R versus Python",
+    "section": "",
+    "text": "Next-token sampling, tool round-trips, RAG, MCP, and agent loops are language-agnostic.\nYou still owe the model a schema if you want a rectangle.\nSecrets live in the environment, never in the repo.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>R versus Python</span>"
+    ]
+  },
+  {
+    "objectID": "R/r-vs-python.html#sec-diff",
+    "href": "R/r-vs-python.html#sec-diff",
+    "title": "7  R versus Python",
+    "section": "7.2 What usually differs",
+    "text": "7.2 What usually differs\n\n\n\nJob\nR (this course)\nPython (this course)\n\n\n\n\nChat + tools\nellmer\nAnthropic / OpenAI SDK (see tool_calling.py)\n\n\nStructured extract\nellmer types → tibble\nJSON schema / Pydantic\n\n\nEvals\nvitals\nInspect, custom pytest\n\n\nMCP server\nPossible, less common in class\nmcp FastMCP lab\n\n\nRAG over PDFs\nragnar, tidyllm, or call Python\nLangChain / LlamaIndex / plain embeddings\n\n\nAgent host\nPositron / Cursor calling R\nCursor / Claude Code (often Python-first)\n\n\nRectangles after extract\ndplyr / modelling as usual\npandas / polars\n\n\n\nR shines when the downstream work is statistical and the LLM is a parser. Python shines when you need the MCP ecosystem, vector stores, or the same language as the agent host.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>R versus Python</span>"
+    ]
+  },
+  {
+    "objectID": "R/r-vs-python.html#sec-pair",
+    "href": "R/r-vs-python.html#sec-pair",
+    "title": "7  R versus Python",
+    "section": "7.3 Suggested pairing in class",
+    "text": "7.3 Suggested pairing in class\n\nImplement today + multiply in both languages. Diff the transcripts.\nExpose pwd via MCP (Python) and call it from Cursor; then register an equivalent tool only inside ellmer (no MCP). Notice which tools the IDE can see.\nOptional RAG mini-lab (either language): chunk this book’s theory/ folder, ask a question that is answered only in the MCP section of MCP, RAG, and agents, and inspect retrieved chunks.",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>R versus Python</span>"
+    ]
+  },
+  {
+    "objectID": "R/r-vs-python.html#sec-read",
+    "href": "R/r-vs-python.html#sec-read",
+    "title": "7  R versus Python",
+    "section": "7.4 Further reading",
+    "text": "7.4 Further reading\n\nHadley Wickham, A no bullshit guide to LLMs\nModel Context Protocol\nellmer\nByteByteGo figure in MCP, RAG, and agents",
+    "crumbs": [
+      "R",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>R versus Python</span>"
+    ]
+  }
+]
