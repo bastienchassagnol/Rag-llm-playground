@@ -1,0 +1,192 @@
+---
+title: "R: LLM integration with ellmer"
+---
+
+This lab is a **short** R track. It compresses Hadley Wickham's
+[A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)
+(talk at useR! 2025; written up on Tidy Design, September 2026).
+Read that essay for tone and stories. Here we keep only the
+mechanisms you will type.
+
+Package docs: [`ellmer`](https://ellmer.tidyverse.org/). Scripts:
+[`R/llm-integration/`](llm-integration/).
+
+The following cell uses **base R only**. It is executed on your
+machine and stored in `_freeze/` so GitHub Actions never needs
+`renv`.
+
+```{r}
+#| label: r-version
+#| eval: true
+R.version.string
+```
+
+::: {.callout-note}
+## API keys, `renv`, and render
+
+From the repository root run `renv::restore()` so `ellmer` comes
+from `renv.lock` (currently 0.5.0). Chunks are `eval: false`. Put a
+provider key in the environment (`ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`, or Gemini's free-tier credentials). Wickham's
+advice for a first session: a few dollars of credit, or Gemini's
+free tier — not a local model until you already have a working cloud
+baseline.
+:::
+
+## Why bother, given that models "kind of suck" {#sec-suck}
+
+Wickham's opening is the right lab safety briefing:
+
+- Results are **stochastic**; the same prompt can count letters
+  three different ways.
+- Models **change** under you (product patches, not sudden
+  intelligence).
+- The **jagged edge**: fluent and wrong on easy tasks; surprisingly
+  good on messy language.
+- Outputs look **complete**. Doubt is rare unless you demand a
+  schema or a tool.
+
+And yet the same sampler writes a limerick, extracts a table from
+photos, and drives a quiz. The course stance is **yes, and**: treat
+the model as a biased, noisy function, then wrap it with structure
+and tools.
+
+## 1. Chat objects {#sec-chat}
+
+`ellmer` is chat in R without copying from a browser. A **system
+prompt** sets tone for the whole object (terse, quiz-master, JSON
+only). You cannot always do that in a consumer web UI.
+
+```r
+# R/llm-integration/01_chat.R
+library(ellmer)
+
+chat <- chat_anthropic(
+  system_prompt = "Be terse. Prefer R examples."
+)
+chat$chat("Who are you?")
+```
+
+Switch provider with `chat_openai()`, `chat_google_gemini()`, and
+friends. The object stores history; later turns see earlier ones.
+
+## 2. Structured data: turn mess into rectangles {#sec-structure}
+
+Data scientists already work with rectangles. The high-leverage move
+is to **force a schema** (animal name, background colour, …) so the
+reply is a data frame, not a paragraph. Images go in with
+`content_image_file()`. Variation across repeats is expected;
+kitten versus cat is often a labelling problem, not a bug.
+
+Once you have a table, ordinary statistics apply: measurement error
+is assumed, not a scandal. For systematic checks, Wickham points to
+Simon Couch's [`vitals`](https://vitals.tidyverse.org/) package
+(evals, in the LLM sense).
+
+```r
+# Sketch — check current ellmer helpers before class
+# (APIs move; see https://ellmer.tidyverse.org/)
+chat <- chat_anthropic()
+# chat$chat_structured(
+#   content_image_file("animals/kitten.jpg"),
+#   type = type_object(
+#     animal = type_string("Common name of the animal."),
+#     background = type_string("Dominant background colour.")
+#   )
+# )
+```
+
+## 3. Tools: function plus metadata {#sec-tools}
+
+The model has no clock and must not invent one. A **tool** is an R
+function plus a description (and argument types). The provider never
+runs R on its servers: it returns "please call `today`"; `ellmer`
+runs `Sys.Date()` on **your** machine and sends the string back.
+
+```r
+# R/llm-integration/02_tools.R
+library(ellmer)
+
+chat <- chat_anthropic()
+chat$register_tool(tool(
+  fun = \( ) as.character(Sys.Date()),
+  name = "today",
+  description = "Return today's date (ISO)."
+))
+chat$register_tool(tool(
+  fun = \(a, b) a * b,
+  name = "multiply",
+  description = "Multiply two numbers exactly.",
+  arguments = list(
+    a = type_number(),
+    b = type_number()
+  )
+))
+chat$chat("What day is it? What is 384729 * 918273?")
+```
+
+That is the same round trip as
+[Python tool calling](../python/llm-tool-calling.qmd).
+
+## 4. Agents, in one line {#sec-ellmer-agents}
+
+Wickham: **agent = chatbot + a read tool + a write tool**.
+`list.files()` plus `file.remove()` is enough to delete every CSV in
+the working directory after the model *looks*. That is the
+demonstration and the warning. Guardrails today are thin ("YOLO").
+Do not register destructive tools on a shared project folder.
+
+The theory chapter
+([MCP, RAG, and agents](../theory/tools-vs-agents.qmd)) places this
+loop next to MCP and RAG so it is not confused with "chat that
+retrieves PDFs".
+
+## 5. Coding with LLMs {#sec-coding}
+
+Four product shapes, increasing in coupling:
+
+1. Web chat (copy-paste; goes stale like Excel → Word).
+2. Inline autocomplete (skill: ignore the bad completions).
+3. In-IDE chat (same model, more file context).
+4. **Agentic coding** (Cursor, Claude Code, …): write, test, iterate.
+
+Two **clear wins** Wickham emphasises — keep these as lab
+exercises:
+
+- **Translation** when the spec is already complete: `curl` →
+  `httr2`, SQL → `dplyr`, LaTeX → Quarto, a UI sketch → a Shiny
+  first draft. Iterate when the first draft is wrong (his penguins
+  app).
+- **Lower activation energy**: a bad first draft you are willing to
+  fix; a four-year `testthat` issue you finally throw an agent at;
+  a domain you do not know yet. Claude's line, quoted in the essay:
+  models make the cost of *trying* low enough that you attempt work
+  you would otherwise postpone.
+
+## Concerns, without the TED-talk padding {#sec-concerns}
+
+From the same essay, stripped to lab policy:
+
+- **Access:** start with a small API budget or Gemini's free tier.
+- **Environment:** individual chat queries are tiny next to a
+  flight; still do not run idle agent loops for fun.
+- **Privacy:** do not paste confidential patient or unpublished
+  data into a consumer endpoint. Institutions already negotiate
+  cloud contracts; you personally may not have those terms.
+- **Power:** the essay's "evil billionaires" aside is political, not
+  a package API. For the course: know who hosts the weights and
+  what they log.
+
+Wickham's closer is the course closer too: one small experiment
+beats doomscrolling. Models are not about to replace a working
+statistician who can specify a schema, read a residual plot, and
+refuse a bad tool.
+
+## Try this session {#sec-try}
+
+1. `chat$chat()` with a terse system prompt.
+2. Register `today` and `multiply`; ask a combined question.
+3. Optional: structured extraction on two images; bind rows; notice
+   disagreement.
+4. Do **not** register `rm` unless you are in a throwaway temp
+   directory (`withr::local_tempdir()`).

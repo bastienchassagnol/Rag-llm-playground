@@ -1,0 +1,69 @@
+---
+title: "Python: a minimal MCP server"
+---
+
+[MCP](https://modelcontextprotocol.io/) is the **host–server**
+contract from
+[MCP, RAG, and agents](../theory/tools-vs-agents.qmd). Your IDE
+(the host) already knows
+how to list tools, call them, and show the transcript. You write a
+**server** that exposes resources and tools.
+
+This lab is intentionally small: one tool that echoes a greeting, one
+that returns the working directory. Production servers add auth,
+timeouts, and allow-lists.
+
+Project files: [`python/basic-mcp-server/`](basic-mcp-server/).
+
+## Run {#sec-mcp-run}
+
+```bash
+# repository root
+uv sync
+uv run python python/basic-mcp-server/server.py
+```
+
+Point a host at the server over **stdio** (the usual desktop
+pattern). In Cursor, add an MCP server whose command is
+`uv run python python/basic-mcp-server/server.py` with the
+**repository root** as the working directory. The host then lists
+`hello` and `pwd` like any other tool.
+
+## Server sketch {#sec-mcp-server}
+
+```python
+# python/basic-mcp-server/server.py
+from pathlib import Path
+
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("course-demo")
+
+
+@mcp.tool()
+def hello(name: str = "world") -> str:
+    """Return a short greeting. Useful as a smoke test for the host."""
+    return f"Hello, {name}."
+
+
+@mcp.tool()
+def pwd() -> str:
+    """Return the server process working directory."""
+    return str(Path.cwd())
+
+
+if __name__ == "__main__":
+    mcp.run()
+```
+
+## What this is not {#sec-mcp-not}
+
+- Not RAG: there is no index and no chunking.
+- Not a full agent: the **host** decides the loop; this process only
+  answers tool calls.
+- Not a replacement for the Anthropic/OpenAI SDK lab. MCP shines
+  when **several apps** must share the same tools without each
+  notebook reimplementing GitHub, Slack, or Gmail.
+
+Next: the same mental model in R with `ellmer`
+([LLM integration](../R/llm-integration.qmd)).

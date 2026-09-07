@@ -1,0 +1,39 @@
+# Render from committed `_freeze/` — no uv, renv, R, or Python on the runner.
+# https://quarto.org/docs/publishing/github-pages.html#freezing-computations
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "_quarto.yml"
+      - "_freeze/**"
+      - "index.qmd"
+      - "theory/**"
+      - "python/**"
+      - "R/**"
+      - "figures/**"
+      - ".github/workflows/publish-quarto-book.yml"
+
+name: Quarto Publish
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          # PDF (`format: pdf`) needs a TeX engine; not R/Python.
+          tinytex: true
+
+      - name: Render and Publish
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

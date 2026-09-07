@@ -1,0 +1,123 @@
+---
+title: "Python: LLM tool calling"
+---
+
+This chapter is the Python counterpart of the R `ellmer` lab. A
+**tool** is still a function plus a JSON schema the model can
+request. The provider does **not** run your Python. It returns a
+tool call; your process executes it and sends the result back.
+
+Runnable copy: [`python/llm-tool-calling/`](llm-tool-calling/).
+
+Interpreter version is frozen locally (no `uv` on GitHub Actions).
+
+```{python}
+#| label: py-version
+#| eval: true
+import sys
+
+print(sys.version.split()[0])
+```
+
+## Setup {#sec-py-setup}
+
+Use `uv` (see the project Python notes). Do not call `pip install`
+from a notebook that might run at check time.
+
+```bash
+# repository root
+uv sync
+export ANTHROPIC_API_KEY="…"   # or OPENAI_API_KEY
+uv run python python/llm-tool-calling/tool_calling.py
+```
+
+## Chat, then a tool {#sec-py-tool}
+
+The `today` tool is deliberately tiny: it exists because the model
+has no clock. The `multiply` tool exists because next-token
+prediction is a bad calculator.
+
+```python
+# python/llm-tool-calling/tool_calling.py
+from datetime import date
+
+from anthropic import Anthropic
+
+TOOLS = [
+    {
+        "name": "today",
+        "description": "Return today's date in ISO format.",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "multiply",
+        "description": "Multiply two numbers exactly.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "a": {"type": "number"},
+                "b": {"type": "number"},
+            },
+            "required": ["a", "b"],
+        },
+    },
+]
+
+
+def run_tool(name: str, args: dict) -> str:
+    if name == "today":
+        return date.today().isoformat()
+    if name == "multiply":
+        return str(args["a"] * args["b"])
+    raise ValueError(f"unknown tool: {name}")
+
+
+def chat_with_tools(prompt: str) -> str:
+    client = Anthropic()
+    messages = [{"role": "user", "content": prompt}]
+    while True:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1024,
+            tools=TOOLS,
+            messages=messages,
+        )
+        if resp.stop_reason != "tool_use":
+            return "".join(
+                b.text for b in resp.content if b.type == "text"
+            )
+        tool_results = []
+        for block in resp.content:
+            if block.type != "tool_use":
+                continue
+            output = run_tool(block.name, block.input)
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": output,
+                }
+            )
+        messages.append({"role": "assistant", "content": resp.content})
+        messages.append({"role": "user", "content": tool_results})
+```
+
+The `while` loop **is** the seed of an agent: observe a tool
+request, act locally, send the observation back. MCP later
+standardises how those tools are advertised to a host.
+
+## Try {#sec-py-try}
+
+```python
+print(chat_with_tools("What day is it today?"))
+print(chat_with_tools("What is 384729 * 918273?"))
+```
+
+Compare with [R: LLM integration](../R/llm-integration.qmd): same
+round trip, different SDK. The comparison chapter
+([R versus Python](../R/r-vs-python.qmd)) lists when you might wrap
+this loop in LangChain, or skip it and speak MCP instead.

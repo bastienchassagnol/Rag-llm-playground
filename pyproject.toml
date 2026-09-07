@@ -1,0 +1,14 @@
+[project]
+name = "rag-llm-playground"
+version = "0.1.0"
+description = "Course labs: Anthropic tool calling and a FastMCP server (mcp 1.x)."
+requires-python = ">=3.14"
+dependencies = [
+    "anthropic>=1.4.0",
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "mcp>=1.9,<2",
+    "nbclient>=0.11.0",
+    "nbformat>=5.11.1",
+    "pyyaml>=6.0.3",
+]

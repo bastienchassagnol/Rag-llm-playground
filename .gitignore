@@ -1,0 +1,136 @@
+*.Rproj
+*.Rproj.user
+.Rproj.user
+*.zip
+*.gz
+/build/
+simulations/*
+# Script simulation outputs: track only PDF figures, ignore everything else
+output/
+!output/**/*.pdf
+# Generated RDS artefacts from simulation scripts
+data/synthetic_networks/*.rds
+
+# LaTeX / pdflatex / latexmk intermediates (keep sources and PDFs)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.nav
+*.snm
+*.vrb
+*.bcf
+*.run.xml
+*.idx
+*.ind
+*.ilg
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.xdy
+*.spl
+*.dvi
+*.ps
+*-blx.bib
+_minted*/
+
+# specific R files
+.Rhistory
+inst/doc
+simulation_*
+older_functions/
+tests/testthat/simulations/
+.Renviron
+.Renviron.local
+
+# my folders
+# Track Quarto slide sources; ignore bulky legacy decks and render output
+slides/**/*.pdf
+slides/**/*.pptx
+slides/**/*.docx
+slides/**/*.html
+slides/.quarto/
+data/raw-data/
+# Rendered book (CI publishes the gh-pages branch; do not commit docs/)
+docs
+
+# Quarto freeze cache MUST be tracked so GitHub Actions can render
+# without uv/renv. Do not add `_freeze/` here.
+**/.quarto/
+
+# Bib enrichment tooling / backups
+scripts/bib_enrich/.venv/
+scripts/curate_bibliography/bib_enrich/.venv/
+*.bib.bak
+.cursor/bib-enrichment.json
+# Ad-hoc Zotero collection exports (merge into inst/REFERENCES.bib)
+IV) build signature matrix.bib
+
+# LibreOffice lock files
+**/.~lock.*
+
+# zotcurate local credentials (never commit)
+.zotc/
+.venv-zotcurate/
+output/zotero/
+__pycache__/
+
+# Project uv virtualenv (lockfile + pyproject.toml are tracked)
+.venv/
+
+# Graphify knowledge graph (local only; rebuilt by hook or graphify update)
+graphify-out/
+
+# Generated manuals and article PDF (CI / local latexmk)
+article/*.pdf
+output/manual/
+
+# scripts/generate_random_markov_network.R: exploratory outputs (gene
+# summary CSV, heatmap, interactive visNetwork widgets + dependency
+# folders). The single static counterpart embedded by the pkgdown
+# vignette lives at vignettes/figures/fig_network_topologies.png (tracked).
+output/random_markov_network/
+/doc/
+/Meta/
+
+# Ad-hoc Zotero collection exports and RAG source material used to draft
+# the inference vignette (merge into inst/REFERENCES.bib, then delete).
+Optimisation approaches.bib
+ii) interval derivation.bib
+Exported Items.bib
+hadca_challenge.bib
+splatter.bib
+benchmark_algorithms.bib
+Reference-based benchmarks.bib
+rna-sieve-paper.bib
+imply.pdf
+imply_supp_material.pdf
+imply_supp_material.md
+rna-sieve.pdf
+rna-sieve.md
+rna-sieve-supplementary.pdf
+error-in-variable.pdf
+temp_*
+compositional intervals.bib
+Monte Carlo estimates correction.bib
+Simulate different mean profiles.bib
+raincloud_biblio.bib
+2D_density_export.svg
+toy_model_parameters_benchamrk.svg
+decovart_mle_proeprties.md
+decovart_statistical_properties.md
+
+/.quarto/
+**/*.quarto_ipynb

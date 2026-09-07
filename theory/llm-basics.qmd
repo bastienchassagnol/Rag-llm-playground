@@ -1,0 +1,96 @@
+---
+title: "LLM basics"
+---
+
+This chapter is a compact map of how large language models behave in
+practice. It is not a substitute for a deep-learning textbook. The
+goal is enough vocabulary to read the rest of the course without
+treating the model as magic.
+
+## What an LLM actually does {#sec-what}
+
+A modern LLM is a **next-token predictor**. Given a sequence of
+tokens (pieces of text), it assigns probabilities to possible next
+tokens and samples from that distribution. Training on a huge corpus
+makes the distribution rich enough that the same mechanism can
+summarise, translate, write code, or refuse a request — all as
+*more text*.
+
+That framing has three immediate consequences:
+
+- **There is no built-in world clock.** Unless a tool or a retrieval
+  step injects facts, the model only has what is in the prompt plus
+  what was frozen into the weights.
+- **There is no built-in calculator.** Arithmetic and counting are
+  not guaranteed; they are patterns the model may or may not
+  reproduce. Hadley Wickham's counting examples (letters in a word,
+  large multiplications) are the same point in comic form
+  ([A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)).
+- **Answers look finished even when they are guesses.** Models are
+  trained to continue fluently. They rarely volunteer "I do not
+  know" unless the system prompt or the product layer forces it.
+
+## Tokens, context, and cost {#sec-tokens}
+
+Text is chopped into **tokens** (sub-word pieces). Context windows
+are measured in tokens, not characters. Everything you send — system
+instructions, conversation history, retrieved documents, tool
+schemas, images encoded as tokens — shares that budget.
+
+Practical habits:
+
+- Put stable instructions in a **system prompt** (tone, role,
+  output schema). Put the variable task in the user turn.
+- Prefer structured outputs (JSON / a typed schema) when you will
+  parse the reply in code. See the R lab in
+  [LLM integration](../R/llm-integration.qmd).
+- Treat **cost** as tokens in plus tokens out. A five-dollar API
+  credit is enough for a first course lab; it is not enough for an
+  unbounded agent loop.
+
+## Training versus inference {#sec-train-infer}
+
+| Stage | What happens | What you control in this course |
+|-------|--------------|----------------------------------|
+| Pre-training | Predict the next token on web-scale text | Nothing (you use a hosted model) |
+| Post-training | Instruction following, tool use, safety | Choose the model family |
+| Inference | Sample tokens for *your* prompt | Prompt, tools, retrieval, temperature |
+
+You will almost never fine-tune a foundation model here. You will
+**steer** one: prompts, tools, and retrieved context.
+
+## Hallucination is a feature of the objective {#sec-hallucination}
+
+If the most likely continuation is a confident-looking citation that
+does not exist, the model may emit it. Grounding strategies do not
+make the sampler honest; they **change the prompt**:
+
+- **RAG** inserts retrieved passages so the likely continuation is
+  "according to this excerpt…" (next chapter).
+- **Tools** let the model request a fact (the date, a SQL query)
+  instead of inventing it.
+- **Structured extraction** plus human or statistical checks treats
+  the model as a noisy sensor, not as an oracle.
+
+## The jagged edge {#sec-jagged}
+
+Capability is uneven. The same model can draft a working regular
+expression and then miscount letters in `unconventional`. Product
+teams paper over embarrassing failure modes with extra prompt
+rules; those patches move, so **evals** on *your* task matter more
+than a leaderboard screenshot.
+
+A useful mental split for coding (again after Wickham):
+
+- **Translation** (clear spec in one form → another form) is often
+  a win: `curl` to `httr2`, SQL to `dplyr`, a sketch to a Shiny
+  skeleton.
+- **Open-ended design** (vague goal, many constraints) is where
+  agent loops shine *and* where they waste tokens.
+
+## Where we go next {#sec-next}
+
+The next chapter separates three architectures that marketing copy
+lumps together: **MCP** (how apps talk to tools), **RAG** (how a
+query fetches documents), and **agents** (a plan–act–observe loop).
+They compose; they are not alternatives to "using an LLM".

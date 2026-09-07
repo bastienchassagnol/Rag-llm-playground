@@ -1,0 +1,50 @@
+---
+title: "R versus Python"
+---
+
+Same model, different glue. This chapter is a map, not a winner.
+
+## What stays the same {#sec-same}
+
+- Next-token sampling, tool round-trips, RAG, MCP, and agent loops
+  are **language-agnostic**.
+- You still owe the model a schema if you want a rectangle.
+- Secrets live in the environment, never in the repo.
+
+## What usually differs {#sec-diff}
+
+| Job | R (this course) | Python (this course) |
+|-----|-----------------|----------------------|
+| Chat + tools | [`ellmer`](https://ellmer.tidyverse.org/) | Anthropic / OpenAI SDK (see [`tool_calling.py`](../python/llm-tool-calling/tool_calling.py)) |
+| Structured extract | `ellmer` types → tibble | JSON schema / Pydantic |
+| Evals | [`vitals`](https://vitals.tidyverse.org/) | Inspect, custom pytest |
+| MCP server | Possible, less common in class | `mcp` FastMCP lab |
+| RAG over PDFs | `ragnar`, `tidyllm`, or call Python | LangChain / LlamaIndex / plain embeddings |
+| Agent host | Positron / Cursor calling R | Cursor / Claude Code (often Python-first) |
+| Rectangles after extract | `dplyr` / modelling as usual | `pandas` / `polars` |
+
+R shines when the **downstream** work is statistical and the LLM is
+a parser. Python shines when you need the MCP ecosystem, vector
+stores, or the same language as the agent host.
+
+## Suggested pairing in class {#sec-pair}
+
+1. Implement `today` + `multiply` in both languages. Diff the
+   transcripts.
+2. Expose `pwd` via MCP (Python) and call it from Cursor; then
+   register an equivalent tool only inside `ellmer` (no MCP). Notice
+   which tools the **IDE** can see.
+3. Optional RAG mini-lab (either language): chunk this book's
+   `theory/` folder, ask a question that is answered only in the
+   MCP section of
+   [MCP, RAG, and agents](../theory/tools-vs-agents.qmd),
+   and inspect retrieved chunks.
+
+## Further reading {#sec-read}
+
+- Hadley Wickham,
+  [A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [ellmer](https://ellmer.tidyverse.org/)
+- ByteByteGo figure in
+  [MCP, RAG, and agents](../theory/tools-vs-agents.qmd)

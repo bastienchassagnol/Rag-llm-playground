@@ -1,0 +1,132 @@
+# Quarto book project — only these sources are rendered (see `project.render`).
+# Layout inspired by https://github.com/BAUDOTlab/teaching_material
+# https://quarto.org/docs/books/
+
+# =========================
+# Project scope and build
+# =========================
+project:
+  type: book
+  output-dir: docs
+  render:
+    - index.qmd
+    - theory/llm-basics.qmd
+    - theory/tools-vs-agents.qmd
+    - python/llm-tool-calling.qmd
+    - python/basic-mcp-server.qmd
+    - R/llm-integration.qmd
+    - R/r-vs-python.qmd
+
+# =========================
+# Book metadata and order
+# =========================
+book:
+  title: "LLMs, tools, and agents"
+  subtitle: "Theory, then R versus Python"
+  description: >
+    A short course: how large language models work, how RAG, MCP and
+    agents differ, then practical implementation in R (`ellmer`) and
+    Python.
+  author: "Bastien Chassagnol"
+  output-file: llm-course
+  repo-url: https://github.com/bastienchassagnol/Rag-llm-playground
+  site-url: https://bastienchassagnol.github.io/Rag-llm-playground/
+  repo-branch: main
+  chapters:
+    - index.qmd
+    - part: "Theory"
+      chapters:
+        - theory/llm-basics.qmd
+        - theory/tools-vs-agents.qmd
+    - part: "Python"
+      chapters:
+        - python/llm-tool-calling.qmd
+        - python/basic-mcp-server.qmd
+    - part: "R"
+      chapters:
+        - R/llm-integration.qmd
+        - R/r-vs-python.qmd
+  repo-actions: [edit, issue, source]
+  sharing: []
+  open-graph: true
+  downloads: [pdf]
+  page-footer:
+    center: |
+      Course notes built with
+      <a href="https://quarto.org/">Quarto</a>.
+      Architecture inspired by
+      <a href="https://github.com/BAUDOTlab/teaching_material">BAUDOTlab/teaching_material</a>.
+    background: "#f8f9fa"
+    border: false
+
+# =========================
+# Shared document defaults
+# =========================
+quarto-required: ">= 1.8.0"
+toc: true
+toc-depth: 3
+number-sections: true
+number-depth: 3
+tbl-cap-location: bottom
+fig-align: center
+out-width: "80%"
+fig-dpi: 320
+from: markdown+emoji
+lang: en-GB
+
+# =========================
+# Output formats
+# =========================
+format:
+  html:
+    page-layout: full
+    lightbox: true
+    smooth-scroll: true
+    code-fold: false
+    code-tools: true
+    code-overflow: wrap
+    code-copy: hover
+    crossrefs-hover: true
+    footnotes-hover: true
+    citations-hover: true
+    theme: cosmo
+  pdf:
+    documentclass: scrbook
+    pdf-engine: lualatex
+    monofont: "DejaVu Sans Mono"
+    latex-auto-install: true
+    latex-max-runs: 5
+    keep-tex: false
+
+# =========================
+# Execution
+# =========================
+# Freeze: run R / Python / Mermaid locally, store results in `_freeze/`
+# (commit that directory). GitHub Actions then renders without uv or renv.
+# https://quarto.org/docs/publishing/github-pages.html#freezing-computations
+# After changing an executable chapter, `quarto render` locally then commit
+# `_freeze` together with the `.qmd` so CI hashes still match.
+execute:
+  echo: true
+  eval: false
+  message: false
+  warning: false
+  error: false
+  freeze: auto
+
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: "#>"
+
+editor:
+  source: true
+
+crossref:
+  chapters: true
+
+license: "MIT"
+copyright:
+  holder: Bastien Chassagnol
+subject: "LLMs, RAG, MCP, agents"
+citation: true
