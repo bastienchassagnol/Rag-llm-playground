@@ -3,9 +3,6 @@
 Quarto **book** (HTML + PDF) for a short course: LLM theory, then
 practical work in Python and R.
 
-Layout and `_quarto.yml` conventions follow
-[BAUDOTlab/teaching_material](https://github.com/BAUDOTlab/teaching_material).
-
 ## Contents
 
 | Part | Path |
