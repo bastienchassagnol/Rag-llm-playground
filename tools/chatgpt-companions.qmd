@@ -278,8 +278,8 @@ statusline, update-cli-config, update-cursor-settings.
 
 ### Personal skills under `~/.cursor/skills/` {#sec-cursor-inventory}
 
-@tbl-cursor-skills groups **34** skills visible in Customize on this
-machine (mostly the Firecrawl family). Regenerate the table from
+@tbl-cursor-skills groups **36** skills visible in Customize on this
+machine (mostly Firecrawl, plus writing/review helpers). Edit
 [`tools/data/cursor_skills_inventory.csv`](data/cursor_skills_inventory.csv)
 when you add skills.
 
@@ -291,15 +291,61 @@ when you add skills.
 #| message: false
 #| warning: false
 
-script <- "tools/cursor_skills_table.R"
+if (!requireNamespace("tinytable", quietly = TRUE)) {
+  stop(
+    "Install tinytable to render this table: ",
+    "install.packages('tinytable').",
+    call. = FALSE
+  )
+}
 csv <- "tools/data/cursor_skills_inventory.csv"
-if (!file.exists(script)) {
-  script <- "cursor_skills_table.R"
+if (!file.exists(csv)) {
   csv <- "data/cursor_skills_inventory.csv"
 }
-source(script)
-build_cursor_skills_table(csv)
+d <- read.csv(csv, stringsAsFactors = FALSE)
+d <- d[order(d$family, d$skill), ]
+rle <- rle(d$family)
+starts <- cumsum(c(1L, head(rle$lengths, -1L)))
+idx <- setNames(as.list(starts), rle$values)
+tab <- tinytable::tt(d[, c("skill", "role")])
+tinytable::group_tt(tab, i = idx)
 ```
+
+### Keyboard shortcuts (this machine) {#sec-cursor-keybindings}
+
+Cursor inherits most **VS Code** defaults on Linux; the bindings below
+are the **custom** ones in
+`~/.config/Cursor/User/keybindings.json`, plus a few defaults every
+author uses daily. @fig-cursor-keybindings-cheatsheet is a printable
+layout (RStudio-cheatsheet style). Package-development chords
+(`devtools::build`, `load_all`, document/test/check tasks) are
+omitted here — they remain in the JSON file.
+
+![Cursor and VS Code shortcut cheatsheet: core editor, AI chat, R, Marimo, LaTeX.](images/cursor-keybindings-cheatsheet.png){#fig-cursor-keybindings-cheatsheet width="95%"}
+
+| Area | Shortcut | Action |
+|------|----------|--------|
+| Core | `Ctrl+Shift+P` | Command palette |
+| Core | `Ctrl+P` | Quick open file |
+| Core | `Ctrl+Shift+F` | Find in workspace (bound in JSON) |
+| Core | `` Ctrl+` `` | Toggle terminal |
+| Core | `Ctrl+B` | Toggle sidebar |
+| Cursor | `Ctrl+L` | Open chat |
+| Cursor | `Ctrl+I` | Agent / composer |
+| Cursor | `@` | Attach file, folder, or docs in chat |
+| Cursor | `/` | Run a saved **Command** (Customize) |
+| R / Quarto | `Ctrl+Shift+W` | Insert `<-` |
+| R / Quarto | `Ctrl+Shift+M` | Insert native pipe (`|>`) |
+| R / Quarto | `Ctrl+Shift+C` | Toggle line comment |
+| R / Quarto | `Ctrl+Shift+R` | Insert `# Section ----` banner |
+| R / Quarto | `F1` | R help for selection |
+| R / Quarto | `Ctrl+.` | Document symbols (`.R`) |
+| R / Quarto | `Ctrl+Alt+I` | Insert `{r}` chunk (`.Rmd`) |
+| R / Quarto | `Ctrl+Alt+P` | Open **httpgd** plot beside editor |
+| Marimo | `Ctrl+Alt+M` | Open marimo notebook (`.py`) |
+| Marimo | `Ctrl+Alt+Shift+M` | `uvx marimo edit --sandbox` in terminal |
+| Marimo | `Ctrl+Alt+R` | `uvx marimo run` current `.py` file |
+| LaTeX | `Ctrl+J` | SyncTeX forward (`.tex` → PDF viewer) |
 
 Copy course skills from `config/skills/` into `.cursor/skills/` when
 you want the same maths or marking behaviour in the IDE as in ChatGPT

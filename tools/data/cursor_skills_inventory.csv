@@ -33,3 +33,5 @@
 "Firecrawl","firecrawl-shop","Product comparison and shopping recommendations from the web."
 "Firecrawl","firecrawl-website-design-clone","Extract a site design system into agent-ready DESIGN.md."
 "Firecrawl","firecrawl-workflows","Outcome-focused Firecrawl workflows (reports, audits, lead lists)."
+"Writing and review","deslop","Remove AI writing patterns; auto-apply on article LaTeX prose (stephenturner/skill-deslop)."
+"Writing and review","peer-review-assistant","Structured manuscript peer review with Firecrawl literature checks; not systematic reviews."
