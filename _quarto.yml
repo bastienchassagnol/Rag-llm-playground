@@ -110,15 +110,16 @@ format:
 # Freeze: run R / Python / Mermaid locally, store results in `_freeze/`
 # (commit that directory). GitHub Actions then renders without uv or renv.
 # https://quarto.org/docs/publishing/github-pages.html#freezing-computations
-# After changing an executable chapter, `quarto render` locally then commit
-# `_freeze` together with the `.qmd` so CI hashes still match.
+# Use freeze: true (not auto) so CI never re-executes chunks even if a
+# source hash looks stale. After changing an executable chapter, always
+# `quarto render` locally and commit `_freeze` with the `.qmd`.
 execute:
   echo: true
   eval: false
   message: false
   warning: false
   error: false
-  freeze: auto
+  freeze: true
 
 knitr:
   opts_chunk:
