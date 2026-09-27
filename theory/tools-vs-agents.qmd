@@ -12,6 +12,51 @@ grounded answer, then an iterative worker.
 
 [![Side-by-side architectures for MCP (hosts and servers), RAG (retrieve then generate), and AI agents (plan–act–observe).](../figures/RAGs-vs-AI-agents.jpg){#fig-mcp-rag-agents}](https://blog.bytebytego.com/)
 
+## From LLM to agentic AI {#sec-llm-stack}
+
+The stack is easier to remember as four layers than as product names.
+@fig-llm-rag-agentic (ByteByteGo) shows how each layer adds machinery
+beyond the previous one.
+
+[![LLM, RAG, AI agent, and agentic AI architectures (ByteByteGo).](../figures/bytebytego-llm-rag-agent-agentic.jpg){#fig-llm-rag-agentic}](https://blog.bytebytego.com/)
+
+**LLM.** The model takes a user prompt and generates a response from
+learned parameters, predicting **tokens** one at a time. There is no
+external retrieval and no tool loop — only prompt in, text out.
+
+**RAG.** The user query goes to a **retriever** before the LLM. The
+retriever fetches relevant chunks from an indexed knowledge base and
+passes them with the query. The answer is **grounded** in that
+context, but grounding does **not** guarantee correctness if the
+index or retrieval step fails.
+
+**AI agent.** The system has a **goal** and tracks **task state**. It
+can plan, call tools, observe results, and repeat until the goal is
+met. That feedback loop is what separates an agent from a single
+chat reply.
+
+**Agentic AI.** One or more agents coordinate toward a **shared
+objective** through planning, tool use, and feedback. An
+**orchestration** layer schedules agents and workflows; they read and
+write **shared state** and call tools in the environment.
+
+## Tool access: function calling versus MCP {#sec-mcp-vs-fc}
+
+Both patterns let an LLM **choose a tool** and let the **runtime**
+execute it, then return results so the model can finish the answer.
+The difference is **where** the function runs and **how** it is wired.
+
+[![Function calling (local functions on the user's machine) versus MCP (remote servers).](../figures/bytebytego-mcp-vs-function-calling.jpg){#fig-mcp-vs-fc}](https://blog.bytebytego.com/)
+
+In **local function calling**, tools are implemented in **your**
+application (or notebook). The runtime executes them on the user's
+machine and passes structured results back to the LLM.
+
+In **MCP**, tools can live on a **remote server**. The host follows
+the MCP protocol: discover tools, route calls, and return results
+across process or network boundaries — the pattern in @sec-mcp and
+the Python [basic MCP server](../python/basic-mcp-server.qmd) lab.
+
 ## MCP: a standard way to plug tools in {#sec-mcp}
 
 MCP is an open standard protocol. It connects AI models to external

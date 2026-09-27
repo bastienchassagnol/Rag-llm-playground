@@ -12,8 +12,10 @@ project:
     - index.qmd
     - theory/llm-basics.qmd
     - theory/tools-vs-agents.qmd
+    - tools/chatgpt-companions.qmd
     - python/llm-tool-calling.qmd
     - python/basic-mcp-server.qmd
+    - python/tabular-foundation-models.qmd
     - R/llm-integration.qmd
     - R/r-vs-python.qmd
 
@@ -38,10 +40,14 @@ book:
       chapters:
         - theory/llm-basics.qmd
         - theory/tools-vs-agents.qmd
+    - part: "Hosted AI tools"
+      chapters:
+        - tools/chatgpt-companions.qmd
     - part: "Python"
       chapters:
         - python/llm-tool-calling.qmd
         - python/basic-mcp-server.qmd
+        - python/tabular-foundation-models.qmd
     - part: "R"
       chapters:
         - R/llm-integration.qmd

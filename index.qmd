@@ -16,9 +16,12 @@ The book layout follows the Quarto **book** pattern used in
    hallucinate ([LLM basics](theory/llm-basics.qmd)). Then three
    patterns that are often confused: MCP, RAG, and agents
    ([Tools versus agents](theory/tools-vs-agents.qmd)).
-2. **Python.** Tool calling from a script, then a minimal MCP server
-   you can attach to a host such as Cursor.
-3. **R.** A condensed `ellmer` workshop, adapted from Hadley Wickham's
+2. **Hosted tools.** ChatGPT companions, a short GPT shortlist, and
+   `$` skills
+   ([Pre-existing AI tools](tools/chatgpt-companions.qmd)).
+3. **Python.** Tool calling, a minimal MCP server, then
+   [tabular foundation models](python/tabular-foundation-models.qmd).
+4. **R.** A condensed `ellmer` workshop, adapted from Hadley Wickham's
    [A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)
    (useR! 2025 / Tidy Design, 2026), then R versus Python.
 
@@ -27,12 +30,13 @@ into your own session after you have set a provider key.
 
 ```{mermaid}
 %%| label: fig-course-pipeline
-%%| fig-cap: "Course pipeline: theory, then two implementation tracks, then a comparison."
+%%| fig-cap: "Course pipeline: theory, hosted tools, then two implementation tracks."
 %%{init: {'theme': 'sandstone'}}%%
 flowchart TD
   T["Theory: how LLMs work"] --> P["Patterns: RAG, MCP, agents"]
-  P --> Py["Python: tools and MCP"]
-  P --> R["R: ellmer chat, structure, tools"]
+  P --> H["Hosted tools: GPTs and skills"]
+  H --> Py["Python: tools, MCP, TFMs"]
+  H --> R["R: ellmer chat, structure, tools"]
   Py --> C["R versus Python"]
   R --> C
 ```
@@ -57,6 +61,10 @@ your machine only.
 ```text
 .
 ├── theory/                 # conceptual chapters
+├── tools/                  # hosted ChatGPT / GPT Store
+├── config/
+│   ├── skills/             # e.g. $maths-dollar
+│   └── prompts/            # reusable system prompts
 ├── python/
 │   ├── llm-tool-calling/   # lab: provider SDK + tools
 │   └── basic-mcp-server/   # lab: tiny MCP server

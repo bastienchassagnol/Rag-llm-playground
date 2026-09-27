@@ -10,8 +10,10 @@ practical work in Python and R.
 | Welcome | `index.qmd` |
 | LLM basics | `theory/llm-basics.qmd` |
 | MCP vs RAG vs agents | `theory/tools-vs-agents.qmd` |
+| Pre-existing AI tools | `tools/chatgpt-companions.qmd` |
 | Python tool calling | `python/llm-tool-calling.qmd` |
 | Minimal MCP server | `python/basic-mcp-server.qmd` |
+| Tabular foundation models | `python/tabular-foundation-models.qmd` |
 | R (`ellmer`) | `R/llm-integration.qmd` |
 | R versus Python | `R/r-vs-python.qmd` |
 
@@ -70,3 +72,5 @@ Quarto ≥ 1.8; LuaLaTeX (or TinyTeX) for the PDF.
   *MCP vs RAG vs AI Agents* (`figures/RAGs-vs-AI-agents.jpg`).
 - R lab condensed from Hadley Wickham,
   [A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms).
+- Tabular foundation models chapter condensed from Christoph Molnar,
+  [Tabular Foundation Models](https://tabularfoundationmodels.com/introduction).

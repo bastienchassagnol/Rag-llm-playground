@@ -9,8 +9,10 @@ on:
       - "_freeze/**"
       - "index.qmd"
       - "theory/**"
+      - "tools/**"
       - "python/**"
       - "R/**"
+      - "config/**"
       - "figures/**"
       - ".github/workflows/publish-quarto-book.yml"
 

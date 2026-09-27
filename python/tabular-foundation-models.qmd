@@ -1,0 +1,191 @@
+---
+title: "Tabular foundation models"
+---
+
+This vignette is a **theory-first** digest of Christoph Molnar's
+open book
+[*Tabular Foundation Models*](https://tabularfoundationmodels.com/introduction)
+(2026). The original has twelve chapters; here we keep the
+definitions, the PFN story, and one concrete Python family per
+applied task. We do not re-run Molnar's benchmarks.
+
+::: {.callout-note}
+## Scope
+
+Molnar's "Understanding" part is built around
+`nanoTabPFN` (educational). He sets aside hypernetworks, cross-table
+transfer, and **LLM-over-tables**. This course chapter follows that
+restriction.
+:::
+
+## Why tables were late to foundation models {#sec-tfm-why}
+
+A **table** is a matrix of rows (instances of one entity) and columns
+(features of that entity). Inside one table the types mix: text,
+integers, dates, missingness. Between tables the *shape* mixes: two
+columns of timestamps versus thousands of gene-expression columns.
+
+For images, a pixel is a pixel. For language, a token is a token. For
+tables, two columns named `sales_fruit_banana` and `id_12319_ban` may
+or may not mean the same thing. Shuffling rows or columns should not
+change the scientific object, but it *does* change what a naive
+transformer sees. That is why tabular ML stayed with
+**gradient-boosted trees** while vision and language consolidated on
+pretrained transformers ([Vaswani et al., 2017](https://papers.nips.cc/paper/7181-attention-is-all-you-need)).
+
+A **foundation model** is a large model pretrained on a vast corpus
+and reused across tasks. A **tabular foundation model (TFM)** is
+pretrained to solve *predictive* tasks on tables.
+
+## Prior-data fitted networks {#sec-pfn}
+
+[Prior-data fitted networks](https://tabularfoundationmodels.com/prior-data-fitted-networks)
+(PFNs; [Müller et al., 2022](https://doi.org/10.48550/arXiv.2112.10510))
+raise the unit of learning from a **row** to a **task**: a table split
+into train and test, with one target column.
+
+| Classical ML | PFN-based TFM |
+|--------------|----------------|
+| Train weights on one dataset | Pretrain on millions of (usually synthetic) tasks |
+| Expensive `fit`, cheap `predict` | Cheap `fit` (load weights), expensive in-context `predict` |
+| Hyperparameter search per table | The "search" was done in pretraining |
+
+**In-context learning** here means: the model adapts to a new table
+*without updating parameters*. The training matrix is part of the
+forward pass.
+
+Molnar's preferred PFN-style TFMs share four traits:
+
+- transformer with row- and column-wise attention;
+- PFN training objective;
+- pretraining mostly on synthetic data (structural causal models are
+  a common prior);
+- prediction by in-context learning.
+
+Families in the wild (names from Molnar's introduction, not an
+exhaustive census): TabPFN (Prior Labs;
+[Hollmann et al., 2023](https://doi.org/10.48550/arXiv.2207.01848)),
+TabICL (Inria), TabDPT, SAP-RPT-1-OSS, Seldon, Nexus, TabFM, EXAONE-Tabular.
+
+### Bayesian reading {#sec-ppd}
+
+Let $D=(X_{\mathrm{train}},y_{\mathrm{train}})$ and let $x_*$ be a new
+row. The object of interest is the posterior predictive
+
+$$
+p(y\mid x_*, D)
+= \int p(y\mid x_*,\phi)\,p(\phi\mid D)\,d\phi,
+$$
+
+where $\phi$ indexes latent supervised tasks. Expanding with Bayes'
+rule makes the **task prior** $p(\phi)$ explicit: pretraining is
+approximate Bayesian inference over that prior. At test time the
+network returns an approximation to $p(y\mid x_*, D)$, not a single
+tree.
+
+## Applying TFMs (one example per task) {#sec-apply}
+
+Syntax looks like `scikit-learn`. Do not be fooled: `.predict(X_test)`
+still consumes the training table in the background.
+
+Chunks below are **not** evaluated at render time. Install
+`tabicl` locally if you want to reproduce Molnar's labs
+(`tabicl==2.2.0` in his classification chapter).
+
+### Classification {#sec-tfm-clf}
+
+[Chapter 6](https://tabularfoundationmodels.com/classification) uses
+**TabICL** (`TabICLClassifier`) on a small multi-class UCI problem
+(land-mine type from three sensors). `.fit` downloads weights and
+encodes columns; `.predict_proba` is the slow step. On that example
+Molnar reports TabICL beating a heavily tuned `XGBoost` classifier.
+Levers when `predict` is too slow: fewer ensemble members, GPU, KV
+cache, fewer features (attention is quadratic in the number of
+columns).
+
+```python
+# Sketch only — see Molnar, ch. 6
+from tabicl import TabICLClassifier
+
+clf = TabICLClassifier(random_state=1)
+clf.fit(X_train, y_train)
+y_hat = clf.predict(X_test)
+```
+
+**TabPFN** is the historically first PFN classifier for *small*
+tables (seconds, not a long GBM search). Use it when $n$ is modest
+and you want a calibrated predictive distribution out of the box.
+
+### Regression {#sec-tfm-reg}
+
+[Chapter 7](https://tabularfoundationmodels.com/regression) keeps
+the same in-context story with a **different pretraining head**.
+The running example is **TabICL** (`TabICLRegressor`) on UCI wine
+quality: predict a continuous score from physicochemical columns.
+Default prediction is the mean of the predictive distribution;
+`output_type="median"` switches to the median.
+
+Molnar compares default TabICL with a `RandomizedSearchCV`-tuned
+`CatBoostRegressor` on a 25% hold-out and reports lower MAE/RMSE
+and higher $R^2$ for TabICL *on that split*. That is an illustration,
+not a universal ranking.
+
+TabICL regression is itself an **ensemble** (default eight members).
+Diversity comes from feature order (circular shifts, permutations)
+and optional Yeo–Johnson transforms — a patch for attention treating
+identically scaled columns as interchangeable. `n_estimators` trades
+accuracy for wall-clock time; on the wine example, one estimator was
+almost as accurate as eight.
+
+```python
+# Sketch only — see Molnar, ch. 7
+from tabicl import TabICLRegressor
+
+reg = TabICLRegressor(random_state=1, n_estimators=8)
+reg.fit(X_train, y_train)
+y_mean = reg.predict(X_test)
+y_median = reg.predict(X_test, output_type="median")
+```
+
+### Quantile regression {#sec-tfm-qreg}
+
+[Chapter 8](https://tabularfoundationmodels.com/quantile-regression)
+uses the same wine table. TabICL regression is pretrained to emit
+**999 quantiles**; `output_type="quantiles"` plus `alphas` picks a
+subset (for example $0.1$, $0.5$, $0.9$). Mean prediction is
+implemented by aggregating those quantiles. Extra $\alpha$ levels are
+essentially free at `predict` time.
+
+A 10%--90% band is a prediction interval, not a confidence interval
+for a mean. Molnar reports pinball loss per $\alpha$ and empirical
+coverage of the 80% band close to nominal on that hold-out. That is
+the TFM analogue of a GBM trained with pinball loss, without a
+separate quantile model.
+
+### Time series {#sec-tfm-ts}
+
+[Chapter 9](https://tabularfoundationmodels.com/forecasting)
+turns forecasting into regression: `TabICLForecaster` wraps
+`TabICLRegressor`, adds calendar / cyclic features from timestamps,
+and attends to a context window (Molnar notes a 4096-row cap). There
+is no extra RNN. Dedicated models such as TimePFN exist when you want
+a prior that was *pretrained* on synthetic series rather than a
+wrapper. Equidistant grids without gaps are required if you ask the
+wrapper to roll a `prediction_length` forward.
+
+## Betting on the stack {#sec-outlook}
+
+Molnar's last part argues that TFMs may inherit the **LLM stack**
+(pretrain once, adapt in context, ship as an API) rather than remain
+one more exhibit in the tabular zoo. For this course the practical
+takeaway is narrower:
+
+- On **small-to-medium** rectangular problems, try a TFM before a
+  long GBM search.
+- Keep trees when you need cheap batch prediction, strict
+  feature-budget latency, or an audit trail of splits.
+- Never treat a TFM chart from ChatGPT Images as a substitute for
+  `predict` on *your* held-out rows.
+
+Further reading starts at
+[tabularfoundationmodels.com/introduction](https://tabularfoundationmodels.com/introduction).
