@@ -127,10 +127,13 @@ handles them differently).
 ![Ten ways to extend Cursor Agent: project memory, plan mode, skills, hooks, MCP, plugins, context, slash commands, compaction, and subagents.](images/cursor-agent-capabilities.png){#fig-cursor-capabilities width="55%"}
 
 **Project memory.** In Claude Code, `CLAUDE.md` is read at the start of
-every session. In Cursor the same role is played by **`.cursorrules`**
-at the repository root, optionally supplemented by `.cursor/rules/` and
-`AGENTS.md`. They are always-on conventions (style, paths, safety),
-not optional skill packs.
+every session. In Cursor, a single monolithic **`.cursorrules`** file
+still works, but maintainable setups split conventions across three
+locations (see @sec-cursor-rules-pipeline): optional **`AGENTS.md`**
+onboarding at the repo root, **`.cursor/rules/*.mdc`** for project
+rules (highest precedence on conflicts), and **`~/.cursor/rules/*.mdc`**
+for cross-repo programming and scientific-writing defaults. Rules are
+always-on; they are not skill packs.
 
 **Plan mode.** Agent can draft a plan before editing files; artefacts
 often land under `~/.cursor/plans/` for review.
@@ -173,13 +176,65 @@ Screenshots: sidebar (@fig-cursor-settings-sidebar) and Customize
 | `~/.cursor/plans/` | Personal | Saved Agent plans and plan-mode outputs |
 | `~/.cursor/projects/` | Personal | Per-workspace state (terminals, transcripts, caches) |
 | `~/.cursor/projects/<hash>/mcps/` | Cache | Per-workspace MCP tool metadata (local only) |
-| `<repo>/.cursorrules` | Project | House style and safety (≈ `CLAUDE.md`) |
+| `<repo>/.cursorrules` | Project | Legacy single-file rules (prefer `.mdc` split) |
+| `<repo>/.cursor/rules/*.mdc` | Project | Scoped rules (`alwaysApply` or `globs`) |
+| `<repo>/AGENTS.md` | Project | Optional repo onboarding for agents |
+| `~/.cursor/rules/*.mdc` | User | Global rules (all repositories) |
 | `~/.agents/skills/` / `~/.claude/skills/` | Optional | Extra skill packs; often symlinked into `~/.cursor/skills/` |
 
 Project skills in `.cursor/skills/` travel with Git. **Rules** and
 **skills** are different layers: rules load every turn; skills load
 when the task matches their `description` or when you enable them in
 Customize.
+
+### Rules pipeline and global `.mdc` files {#sec-cursor-rules-pipeline}
+
+@fig-cursor-rules-pipeline summarises how to layer **rules** in a
+modern Cursor workflow. The sketch is AI-generated in an Excalidraw-like
+style for teaching; the tables below are the canonical text.
+
+![Three-tier map: superseding monolithic .cursorrules with AGENTS.md, project .cursor/rules, and user ~/.cursor/rules; eight global .mdc scopes; slash-invoked skills under ~/.cursor/skills.](images/cursor-rules-pipeline-excalidraw.png){#fig-cursor-rules-pipeline width="100%"}
+
+**Top — where rules live (precedence increases toward the repo).**
+
+1. **`~/.cursor/rules/*.mdc`** — user-wide defaults (British English,
+   statistics, Zotero hygiene, R/Python/Quarto/LaTeX conventions).
+2. **`<repo>/.cursor/rules/*.mdc`** — project overrides (`alwaysApply:
+   true` or file `globs` such as `**/*.R`).
+3. **`<repo>/AGENTS.md`** — optional one-page agent onboarding (commands,
+   data layout, check targets); does not replace scoped `.mdc` rules.
+4. **`<repo>/.cursorrules`** — still honoured, but hard to diff and easy
+   to bloat; migrate durable sections into `.mdc` files.
+
+**Middle — global user rules on this machine** (`~/.cursor/rules/`):
+
+| File | Scope |
+|------|--------|
+| `scope-workspace.mdc` | Always — scope, data discipline, SSH/editor hosts |
+| `statistical-modelling.mdc` | Always — CV, bootstrap, permutation, model review |
+| `documentation-bibliography.mdc` | Always — Zotero, Quarto bib, document intake |
+| `scientific-writing.mdc` | Always — voice, figures, integrity, reporting |
+| `r-development.mdc` | `*.R`, package layout — CRAN hygiene, Air, ggplot2 |
+| `python-development.mdc` | `*.py`, `pyproject.toml` — uv, Ruff, ty |
+| `quarto-presentations.mdc` | `*.qmd`, slides — Quarto, Mermaid, reveal.js |
+| `latex-scientific.mdc` | `*.tex`, article trees — LuaLaTeX, TikZ, minted |
+
+**Bottom — slash skills** (`~/.cursor/skills/<name>/SKILL.md`). Type
+**/** in Agent chat to run a saved **Command**, or name a skill so the
+Agent loads it when the `description` matches. Families on this machine:
+
+| Domain | Skills (invoke by folder name) |
+|--------|--------------------------------|
+| Writing and review | `deslop`, `peer-review-assistant`, `latex-modern-audit` |
+| Authoring and decks | `quarto-revealjs`, `quarto-revealjs-fragment`, `auto-animate-elements`, `convert-documents-to-markdown` |
+| Code intelligence | `graphify`, `find-skills` |
+| Web and literature (Firecrawl) | `firecrawl` (router) plus specialised skills (`firecrawl-scrape`, `firecrawl-search`, `firecrawl-research-papers`, `firecrawl-parse`, …) |
+| Social / misc. | `instagram-carousel` |
+
+Full inventory: @tbl-cursor-skills and
+[`tools/data/cursor_skills_inventory.csv`](data/cursor_skills_inventory.csv).
+Built-in Cursor skills remain under `~/.cursor/skills-cursor/` (not
+listed here).
 
 ### Settings and access {#sec-cursor-settings}
 
@@ -278,7 +333,7 @@ statusline, update-cli-config, update-cursor-settings.
 
 ### Personal skills under `~/.cursor/skills/` {#sec-cursor-inventory}
 
-@tbl-cursor-skills groups **36** skills visible in Customize on this
+@tbl-cursor-skills groups **38** skills visible in Customize on this
 machine (mostly Firecrawl, plus writing/review helpers). Edit
 [`tools/data/cursor_skills_inventory.csv`](data/cursor_skills_inventory.csv)
 when you add skills.
