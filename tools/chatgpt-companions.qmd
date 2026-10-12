@@ -154,6 +154,28 @@ prompt) defined under Customize → Commands — distinct from skills.
 tokens; **Subagents** (parallel Task workers) are configured under
 Customize → Subagents.
 
+**How a skill is loaded.** @fig-agent-skills-workflow (ByteByteGo)
+shows why skills stay cheap until needed:
+
+1. **User query.** A request such as "Analyse data and draft report".
+2. **Build prompt + skills index.** The agent runtime combines the
+   query with skills metadata: a short list of available skills and
+   their one-line `description` fields.
+3. **Reason and select skill.** The model reads the prompt and decides
+   "I want skill X".
+4. **Load skill into context.** The runtime receives that request,
+   loads the matching `SKILL.md`, and adds it to the active context.
+5. **Final output.** The model follows `SKILL.md`, runs any bundled
+   scripts, and produces the report.
+
+Because only the index is always present and each `SKILL.md` is loaded
+on demand, the context stays small and the model's behaviour stays
+consistent across sessions. This is also why a precise `description`
+matters: it is the only part of the skill the model sees before
+choosing.
+
+![Agent Skills workflow: user query, prompt plus skills index, skill selection by the LLM, loading SKILL.md into context, and final output. Source: ByteByteGo.](images/agent-skills-workflow.jpg){#fig-agent-skills-workflow width="80%"}
+
 @fig-cursor-skills-mcp summarises on-disk layout and UI entry points.
 Screenshots: sidebar (@fig-cursor-settings-sidebar) and Customize
 (@fig-cursor-customize).
