@@ -108,6 +108,74 @@ The numbered path in the middle of @fig-mcp-rag-agents is a
 4. Question plus chunks go to the LLM.
 5. The LLM writes an answer grounded in that context.
 
+### Chunking large documents {#sec-chunking}
+
+Step 2 only works if sources were split into **chunks** when the
+index was built. Boundaries matter as much as embedding model choice:
+too large and the retriever dilutes the answer; too small and you lose
+the sentence that carried the definition. @fig-chunking-strategies
+(ByteByteGo) lists eight strategies — there is no one-size-fits-all.
+
+[![Eight chunking strategies for RAG: fixed-size, recursive, document-based, semantic, LLM-based, agentic, late chunking, and hierarchical (ByteByteGo).](../figures/chunking-strategy.jpg){#fig-chunking-strategies}](https://blog.bytebytego.com/)
+
+**Fixed-size.** Cuts text every fixed number of tokens, with a small
+overlap.
+
+**Recursive.** Splits on paragraphs first, falling back to lines then
+words and characters only when a piece is still too big.
+
+**Document-based.** Splits wherever the document already marks a break —
+a heading, a chapter, an HTML tag — so a Markdown file can become one
+chunk per section on its own.
+
+**Semantic.** Embeds each sentence, checks its similarity to the one
+before it, and starts a new chunk when that similarity drops. This
+finds real topic shifts instead of guessing by length.
+
+**LLM-based.** Asks an LLM to rewrite the text as standalone
+propositions, one idea per line, and turns each into a chunk — high
+quality but expensive across a large corpus.
+
+**Agentic.** An AI agent reads each document, decides what it is (code,
+contract, table), and picks the chunking method for that file instead
+of one rule for everything.
+
+**Late chunking.** Runs the full document through an embedding model,
+then applies normal split boundaries and mean-pools within each boundary
+to create chunk embeddings.
+
+**Hierarchical.** Breaks the document into layers — sections,
+paragraphs, then sentences — and indexes them with parent–child links
+so retrieval can zoom in or out.
+
+::: {#nte-chunking-cursor .callout-note}
+## Customising chunking in Cursor and Claude Code
+
+In the IDE, much “RAG” is **@-attached context**: you point the agent
+at files or folders instead of querying a separate vector store. The
+host still has to **fit** that material into the token budget, so you
+customise *how* the agent reads attached corpora:
+
+- Name **document roles** (course theory, API spec, lab script) and
+  which paths are canonical.
+- Prefer **document-based** or **hierarchical** reading for structured
+  Markdown: headings first, then the paragraph that answers the question.
+- Reserve **fixed-size** or **recursive** splits for offline indexing
+  (PDF dumps, scraped HTML) in the Python labs.
+- When attachments are huge, ask for a **narrower** `@` scope before
+  the model guesses from a partial view.
+
+**Skill or rule?** Use a **project rule** (`.cursor/rules/…`) for
+stable defaults: where docs live, how to prioritise `@` context, and
+when to request a smaller attachment. Rules stay short and apply whenever
+you work in the repo. Use a **project skill** (`.cursor/skills/…`) when
+chunking is a **repeatable workflow** — choose a strategy per file type,
+run pre-processing scripts, rebuild embeddings, smoke-test retrieval.
+Skills suit multi-step procedures; rules suit everyday habits. For
+teaching with mostly `@`-driven context, start with a **rule**; add a
+**skill** once you automate offline indexing outside the chat.
+:::
+
 RAG does not, by itself, let the model send an email or delete a
 file. It changes **what is in the prompt**. If the index is stale,
 the answer is stale. If retrieval misses the right passage, the
