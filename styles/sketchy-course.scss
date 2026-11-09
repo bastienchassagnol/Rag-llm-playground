@@ -1,0 +1,27 @@
+/*-- scss:defaults --*/
+// Sketchy stays the base (Neucha body, Cabin Sketch headings, drawn
+// borders). These overrides keep long course pages readable and pick
+// up the forest-green accent used in the slide prompts.
+
+$primary: #1f6b4a;
+$link-color: #1f6b4a;
+$link-hover-color: #144a33;
+$font-weight-base: 500;
+$font-size-base: 1.1rem;
+$headings-color: #212529;
+
+/*-- scss:rules --*/
+.navbar {
+  border-bottom: 2px solid #333;
+}
+
+pre,
+code,
+.quarto-code-copy,
+.sourceCode {
+  font-weight: 400;
+}
+
+.nav-footer a {
+  font-weight: 500;
+}

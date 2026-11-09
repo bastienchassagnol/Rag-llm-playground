@@ -1,0 +1,38 @@
+---
+title: "LinkedIn educational carousel"
+description: >
+  Portrait 4:5 slide deck in one scientific graphic language, with
+  illustrations kept separate from the text.
+author: "Bastien Chassagnol"
+date: 2026-11-09
+categories:
+  - slides
+  - visual
+  - linkedin
+---
+
+Ask for the slide-by-slide plan before any pixels. The prompt keeps
+one message per slide, a fixed portrait canvas, and a short list of
+things the picture must not do. Set `n` and the topic in the last
+line.
+
+```text
+Create a new, original $n$-slide LinkedIn educational carousel using the same overall graphic language (with n the number of slides to generate)
+
+Design requirements:
+- Portrait 4:5 (1080 × 1350 px).
+- White backgrounds and generous whitespace.
+- DM Sans SemiBold headings and Inter body text.
+- Dark charcoal typography with forest-green and pale-mint accents.
+- Minimalist scientific vector illustrations using cells, nuclei, DNA, RNA and molecular structures.
+- Subtle, low-contrast genomic background patterns.
+- One clear educational message per slide.
+- Consistent margins, heading hierarchy and footers.
+- No photographs, 3D rendering, gradients or clutter.
+- No copied logos or publisher branding.
+
+First develop slide-by-slide content and visual concepts. Then create the illustrations separately from the text and produce an editable slide layout.
+Preserve scientific accuracy and flag claims requiring verification.
+
+My topic is: [INSERT TOPIC].
+```

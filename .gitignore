@@ -63,7 +63,7 @@ slides/**/*.docx
 slides/**/*.html
 slides/.quarto/
 data/raw-data/
-# Rendered book (CI publishes the gh-pages branch; do not commit docs/)
+# Rendered website (CI publishes the gh-pages branch; do not commit docs/)
 docs
 
 # Quarto freeze cache MUST be tracked so GitHub Actions can render

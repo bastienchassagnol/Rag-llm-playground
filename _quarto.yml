@@ -1,12 +1,12 @@
-# Quarto book project — only these sources are rendered (see `project.render`).
+# Quarto website — only these sources are rendered (see `project.render`).
 # Layout inspired by https://github.com/BAUDOTlab/teaching_material
-# https://quarto.org/docs/books/
+# https://quarto.org/docs/websites/
 
 # =========================
 # Project scope and build
 # =========================
 project:
-  type: book
+  type: website
   output-dir: docs
   render:
     - index.qmd
@@ -18,45 +18,86 @@ project:
     - python/tabular-foundation-models.qmd
     - R/llm-integration.qmd
     - R/r-vs-python.qmd
+    - prompts/index.qmd
+    - prompts/linkedin-carousel.qmd
+    - prompts/mathematical-researcher.qmd
 
 # =========================
-# Book metadata and order
+# Website metadata and nav
 # =========================
-book:
+# Top navigation, one menu per theme:
+# https://quarto.org/docs/websites/website-navigation.html#top-navigation
+# Machine-readable copies of each page (`llms.txt`, `*.llms.md`):
+# https://quarto.org/docs/websites/website-llms.html
+website:
   title: "LLMs, tools, and agents"
-  subtitle: "Theory, then R versus Python"
   description: >
     A short course: how large language models work, how RAG, MCP and
     agents differ, then practical implementation in R (`ellmer`) and
     Python.
-  author: "Bastien Chassagnol"
-  output-file: llm-course
-  repo-url: https://github.com/bastienchassagnol/Rag-llm-playground
   site-url: https://bastienchassagnol.github.io/Rag-llm-playground/
+  repo-url: https://github.com/bastienchassagnol/Rag-llm-playground
   repo-branch: main
-  chapters:
-    - index.qmd
-    - part: "Theory"
-      chapters:
-        - theory/llm-basics.qmd
-        - theory/tools-vs-agents.qmd
-    - part: "Hosted AI tools"
-      chapters:
-        - tools/chatgpt-companions.qmd
-    - part: "Python"
-      chapters:
-        - python/llm-tool-calling.qmd
-        - python/basic-mcp-server.qmd
-        - python/tabular-foundation-models.qmd
-    - part: "R"
-      chapters:
-        - R/llm-integration.qmd
-        - R/r-vs-python.qmd
   repo-actions: [edit, issue, source]
-  sharing: []
-  open-graph: true
-  downloads: [pdf]
+  llms-txt: true
+  # LinkedIn, Slack, and similar unfurls read Open Graph tags.
+  # https://quarto.org/docs/websites/website-tools.html#social-metadata
+  open-graph:
+    locale: en_GB
+    site-name: "LLMs, tools, and agents"
+  twitter-card: true
+  # Privacy-friendly, cookie-free counts. Register the hostname at
+  # https://plausible.io or visits are requested but not stored.
+  # https://quarto.org/docs/websites/website-tools.html#analytics
+  plausible-analytics: |
+    <script defer data-domain="bastienchassagnol.github.io" src="https://plausible.io/js/script.js"></script>
+  # Hosted search. `search.json` is written on every render; point an
+  # Algolia index at it, then replace the two REPLACE_ME values.
+  # The search-only key is public (read-only). Never put an admin key here.
+  # https://quarto.org/docs/websites/website-search.html#using-algolia
+  search:
+    location: navbar
+    type: overlay
+    algolia:
+      index-name: rag-llm-playground
+      application-id: REPLACE_ME
+      search-only-api-key: REPLACE_ME
+      show-logo: true
+  navbar:
+    background: light
+    pinned: true
+    search: true
+    collapse-below: lg
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Theory"
+        menu:
+          - theory/llm-basics.qmd
+          - theory/tools-vs-agents.qmd
+      - text: "Hosted tools"
+        href: tools/chatgpt-companions.qmd
+      - text: "Python"
+        menu:
+          - python/llm-tool-calling.qmd
+          - python/basic-mcp-server.qmd
+          - python/tabular-foundation-models.qmd
+      - text: "R"
+        menu:
+          - R/llm-integration.qmd
+          - R/r-vs-python.qmd
+      - text: "Prompts"
+        href: prompts/index.qmd
+    tools:
+      - icon: linkedin
+        href: https://www.linkedin.com/in/bastien-chassagnol-677b67140/
+        aria-label: LinkedIn
+      - icon: github
+        href: https://github.com/bastienchassagnol/Rag-llm-playground
+        aria-label: GitHub
   page-footer:
+    left: |
+      <a href="https://www.linkedin.com/in/bastien-chassagnol-677b67140/">Bastien Chassagnol on LinkedIn</a>
     center: |
       Course notes built with
       <a href="https://quarto.org/">Quarto</a>.
@@ -83,6 +124,9 @@ lang: en-GB
 # =========================
 # Output formats
 # =========================
+# Sketchy (Bootswatch), then a small course override:
+# https://bootswatch.com/sketchy/
+# https://quarto.org/docs/websites/website-blog.html#themes
 format:
   html:
     page-layout: full
@@ -95,14 +139,11 @@ format:
     crossrefs-hover: true
     footnotes-hover: true
     citations-hover: true
-    theme: cosmo
-  pdf:
-    documentclass: scrbook
-    pdf-engine: lualatex
+    theme:
+      - sketchy
+      - styles/sketchy-course.scss
+    mainfont: Neucha
     monofont: "DejaVu Sans Mono"
-    latex-auto-install: true
-    latex-max-runs: 5
-    keep-tex: false
 
 # =========================
 # Execution
@@ -128,9 +169,6 @@ knitr:
 
 editor:
   source: true
-
-crossref:
-  chapters: true
 
 license: "MIT"
 copyright:

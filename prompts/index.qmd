@@ -1,0 +1,24 @@
+---
+title: "Prompt library"
+description: >
+  Reusable prompts for slide decks, mathematics, and research writing.
+listing:
+  id: prompts
+  contents:
+    - linkedin-carousel.qmd
+    - mathematical-researcher.qmd
+  type: default
+  categories: numbered
+  sort: title
+  feed:
+    type: partial
+    title: "Prompt library"
+---
+
+Copy a prompt into ChatGPT, Claude, or Cursor. Each card is one
+reusable brief. Use the categories in the margin to keep slides,
+mathematics, and research briefs apart. Replace the bracketed
+placeholder at the end of a prompt before you send it.
+
+::: {#prompts}
+:::

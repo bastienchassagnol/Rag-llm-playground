@@ -1,4 +1,7 @@
-# Render from committed `_freeze/` — no uv, renv, R, or Python on the runner.
+# Render the website from committed `_freeze/` — no uv, renv, R, Python,
+# or TeX on the runner. TinyTeX is omitted on purpose: `quarto install
+# tool tinytex` asks GitHub for rstudio/tinytex-releases and fails with
+# 403 when that API is rate-limited (run 39114652200).
 # https://quarto.org/docs/publishing/github-pages.html#freezing-computations
 on:
   workflow_dispatch:
@@ -13,6 +16,8 @@ on:
       - "python/**"
       - "R/**"
       - "config/**"
+      - "prompts/**"
+      - "styles/**"
       - "figures/**"
       - ".github/workflows/publish-quarto-book.yml"
 
@@ -29,9 +34,6 @@ jobs:
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
-        with:
-          # PDF (`format: pdf`) needs a TeX engine; not R/Python.
-          tinytex: true
 
       - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2

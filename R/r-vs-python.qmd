@@ -34,7 +34,7 @@ stores, or the same language as the agent host.
 2. Expose `pwd` via MCP (Python) and call it from Cursor; then
    register an equivalent tool only inside `ellmer` (no MCP). Notice
    which tools the **IDE** can see.
-3. Optional RAG mini-lab (either language): chunk this book's
+3. Optional RAG mini-lab (either language): chunk this site's
    `theory/` folder, ask a question that is answered only in the
    MCP section of
    [MCP, RAG, and agents](../theory/tools-vs-agents.qmd),

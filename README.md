@@ -1,7 +1,8 @@
 # LLMs, tools, and agents
 
-Quarto **book** (HTML + PDF) for a short course: LLM theory, then
-practical work in Python and R.
+Quarto **website** for a short course: LLM theory, then practical
+work in Python and R. Top navigation is one menu per theme. Each
+HTML page also has a `.llms.md` twin for agents.
 
 ## Contents
 
@@ -16,6 +17,7 @@ practical work in Python and R.
 | Tabular foundation models | `python/tabular-foundation-models.qmd` |
 | R (`ellmer`) | `R/llm-integration.qmd` |
 | R versus Python | `R/r-vs-python.qmd` |
+| Prompt library | `prompts/index.qmd` |
 
 Labs (runnable, not rendered as API calls):
 
@@ -54,17 +56,26 @@ under `renv/library/` (gitignored).
 ## Build
 
 Computations use Quarto [freeze](https://quarto.org/docs/publishing/github-pages.html#freezing-computations)
-(`execute.freeze: auto`). Run R, Python, and Mermaid **on your machine**,
+(`execute.freeze: true`). Run R, Python, and Mermaid **on your machine**,
 then commit `_freeze/` so GitHub Actions can publish without `uv` or
 `renv`.
 
 ```bash
-quarto render     # updates _freeze/ and writes HTML + PDF under docs/
+quarto render     # updates _freeze/ and writes HTML under docs/
 git add -u _freeze
 quarto preview
 ```
 
-Quarto ≥ 1.8; LuaLaTeX (or TinyTeX) for the PDF.
+Quarto ≥ 1.8. The site is HTML only, so CI does not install TinyTeX.
+
+Search uses [Algolia](https://quarto.org/docs/websites/website-search.html#using-algolia).
+After `quarto render`, upload `docs/search.json` to an index named
+`rag-llm-playground`, then replace `REPLACE_ME` in `_quarto.yml`
+with the application id and the **search-only** API key. Page counts
+use [Plausible](https://plausible.io) on
+`bastienchassagnol.github.io`; add that hostname in Plausible or the
+script runs without a dashboard. LinkedIn unfurls use the Open Graph
+tags (`website.open-graph`).
 
 ## Attribution
 

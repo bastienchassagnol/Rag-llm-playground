@@ -6,11 +6,14 @@ These notes are a **draft course** on large language models (LLMs).
 The first half is conceptual. The second half is practical: the same
 ideas in Python, then in R, then a side-by-side comparison.
 
-The book layout follows the Quarto **book** pattern used in
-[BAUDOTlab/teaching_material](https://github.com/BAUDOTlab/teaching_material)
-(HTML site plus a downloadable PDF).
+The site uses a top navigation bar, one menu per theme, in the Quarto
+**website** pattern. The directory layout still follows
+[BAUDOTlab/teaching_material](https://github.com/BAUDOTlab/teaching_material).
+A plain-text copy of each page is written beside the HTML
+(`llms.txt` and `*.llms.md`) so an agent can read the course without
+the navigation chrome.
 
-## How to read this book {#sec-how-to-read}
+## How to read this site {#sec-how-to-read}
 
 1. **Theory.** Tokens, next-token prediction, and why models
    hallucinate ([LLM basics](theory/llm-basics.qmd)). Then three
@@ -24,6 +27,8 @@ The book layout follows the Quarto **book** pattern used in
 4. **R.** A condensed `ellmer` workshop, adapted from Hadley Wickham's
    [A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)
    (useR! 2025 / Tidy Design, 2026), then R versus Python.
+5. **Prompts.** A [prompt library](prompts/index.qmd) you can filter
+   by category (slides, mathematics, research).
 
 Live API calls are **not** evaluated at render time. Copy the chunks
 into your own session after you have set a provider key.
@@ -46,22 +51,22 @@ flowchart TD
 From the repository root:
 
 ```bash
-quarto render          # HTML and PDF under docs/; refreshes _freeze/
+quarto render          # HTML under docs/; refreshes _freeze/
 quarto preview         # live HTML preview
 ```
 
-Requirements: [Quarto](https://quarto.org/) 1.8 or newer, plus a LaTeX
-engine (`tinytex` or TeX Live) for the PDF. Executable chapters are
-frozen locally (`_freeze/`, committed) so CI does not install `uv` or
-`renv`. Lab scripts themselves: `uv sync` and `renv::restore()` on
-your machine only.
+Requirements: [Quarto](https://quarto.org/) 1.8 or newer. Executable
+pages are frozen locally (`_freeze/`, committed) so CI does not
+install `uv`, `renv`, or a TeX distribution. Lab scripts themselves:
+`uv sync` and `renv::restore()` on your machine only.
 
 ## Repository map {#sec-map}
 
 ```text
 .
-├── theory/                 # conceptual chapters
+├── theory/                 # conceptual pages
 ├── tools/                  # hosted ChatGPT / GPT Store
+├── prompts/                # reusable prompts (listing)
 ├── config/
 │   ├── skills/             # e.g. $maths-dollar
 │   └── prompts/            # reusable system prompts
@@ -72,5 +77,5 @@ your machine only.
 │   └── llm-integration/    # lab: ellmer scripts
 ├── figures/                # shared images
 ├── _freeze/                # local computation cache (commit this)
-└── docs/                   # rendered HTML and PDF (gitignored)
+└── docs/                   # rendered HTML (gitignored)
 ```

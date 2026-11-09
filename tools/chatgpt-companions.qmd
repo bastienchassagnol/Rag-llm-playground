@@ -35,7 +35,7 @@ plots (axes lie, samples invent themselves).
 (public beta) turns a chat into a small interactive website or
 dashboard you can preview and share without leaving ChatGPT. Fine for
 a course demo or an internal tracker; not a substitute for a
-version-controlled Quarto book.
+version-controlled Quarto website.
 
 Other first-party pieces worth knowing, even if they are not GPTs:
 **Projects** (sticky files and instructions), **Deep research**
@@ -437,10 +437,10 @@ you want the same maths or marking behaviour in the IDE as in ChatGPT
   @tbl-gpts because they are not ChatGPT GPTs.
 - **Claude Projects**, **Gemini Gems**, **Copilot** in the IDE:
   the same "sticky instructions + files" idea on another host.
-- **MCP servers** in Cursor (this book's Python lab): when the tool
+- **MCP servers** in Cursor (this site's Python lab): when the tool
   must see *your* GitHub, Gmail, or database, not a GPT author's
   action URL.
 
 For anything that will be marked or published, keep the source of
-truth in Git (this book, `config/prompts/`, package vignettes), not
+truth in Git (this site, `config/prompts/`, package vignettes), not
 in a chat transcript.
