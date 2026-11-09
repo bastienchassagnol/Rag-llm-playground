@@ -14,6 +14,7 @@ HTML page also has a `.llms.md` twin for agents.
 | Pre-existing AI tools | `tools/chatgpt-companions.qmd` |
 | Python tool calling | `python/llm-tool-calling.qmd` |
 | Minimal MCP server | `python/basic-mcp-server.qmd` |
+| Claude Code | `python/claude-code.qmd` |
 | Tabular foundation models | `python/tabular-foundation-models.qmd` |
 | R (`ellmer`) | `R/llm-integration.qmd` |
 | R versus Python | `R/r-vs-python.qmd` |

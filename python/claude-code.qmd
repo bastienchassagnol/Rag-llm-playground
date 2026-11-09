@@ -1,0 +1,403 @@
+---
+title: "Python: Claude Code"
+resources:
+  - claude-code-cheatsheet.pdf
+---
+
+Claude Code is a terminal session that can read this repository,
+edit it, and run `uv`. Start it in the project root, not in your
+home directory. The commands below are the ones worth keeping from
+the Real Python
+[Claude Code cheat sheet](https://realpython.com/cheatsheets/claude-code/):
+how to spend fewer tokens, how to drop a finished chat, and how to
+load a skill. The printed sheet is embedded at the end.
+
+```bash
+cd my-project/                 # directory that holds pyproject.toml
+claude                         # interactive session
+claude "explain this repo"     # one prompt, then the session
+```
+
+In this course that directory is the repository root, after
+`uv sync`. Type `/` to list commands.
+
+::: {.callout-note collapse="true"}
+## What happens when you press Enter
+
+![One request through Claude Code, from prompt to final message. © ByteByteGo, reproduced for teaching ([source](https://blog.bytebytego.com/)).](claude_code_agent.jpg){#fig-claude-loop fig-alt="Flow diagram: the user prompt goes through the interface to the agent loop, which proposes an edit; the permission system checks it; a tool runs it in the execution environment; the result returns to the agent loop, which updates memory and replies to the user."}
+
+@fig-claude-loop follows one prompt, "Fix the failing test in
+auth.test.ts":
+
+1. You send the prompt through your interface.
+2. The interface (CLI, IDE, or SDK) adds the repository and file
+   context and passes the request to the agent loop.
+3. The agent loop plans the next move and proposes an action:
+   `Edit(auth.ts, lines 42–55)`.
+4. The permission system checks that action against the allow, ask,
+   and deny rules (@sec-claude-permissions).
+5. The approved action becomes a tool call, `Edit(auth.ts, patch)`,
+   sent to the matching tool.
+6. The tool runs in the execution environment (shell, cloud, or
+   sandbox) as a real system call.
+7. The execution returns a tool result to the agent loop.
+8. The agent saves the turn to its state and streams the final
+   message to you.
+
+Steps 3 to 7 repeat until the task is done. Each pass adds the tool
+result to the context, which is why long tasks cost more tokens
+(@sec-claude-tokens). The numbers in the picture differ slightly:
+it numbers the tool call 4 and leaves the permission check
+unnumbered.
+:::
+
+## Slash commands worth keeping {#sec-claude-slash}
+
+Put the command at the start of the message. `/compact` shortens the
+chat so you can continue. `/clear` throws the chat away when the
+task changes. `/skills` is how a `SKILL.md` becomes a command.
+
+| Command | What it does |
+|---------|----------------|
+| `/context` | Show how much of the window is in use |
+| `/compact [focus]` | Summarise the chat and free space |
+| `/clear` | Start a fresh chat. Also `/new` |
+| `/usage` | Show cost and limits. Also `/cost` |
+| `/effort low` | Set effort. `high` spends more tokens |
+| `/model [name]` | Switch model. `s` in the picker is this session only |
+| `/skills` | List skills and turn them on or off |
+| `/reload-skills` | Load skills added during the session |
+
+`/memory`, `/hooks`, `/permissions`, and `/mcp` open the four
+configurations in the rest of this page.
+
+## Three scopes {#sec-claude-scopes}
+
+The same choice comes up for memory, for the settings file that
+holds hooks and permissions, and for skills.
+
+| Scope | Memory | Hooks and permissions | Skills |
+|-------|--------|------------------------|--------|
+| You, every project | `~/.claude/CLAUDE.md` | `~/.claude/settings.json` | `~/.claude/skills/<name>/SKILL.md` |
+| This project, the team | `CLAUDE.md` (commit it) | `.claude/settings.json` | `.claude/skills/<name>/SKILL.md` |
+| This project, only you | `CLAUDE.local.md` | `.claude/settings.local.json` | No third directory |
+
+Commit the team row. The "only you" row is gitignored in this
+repository. The cheat sheet does not give skills a third path: a
+skill that must not be shared belongs in `~/.claude/skills/`. If it
+has to sit inside the project, gitignore that one skill directory.
+
+Settings files are strict JSON: no comments, no trailing commas.
+List keys such as `permissions.allow` merge across files. Managed
+settings win, then a `--settings` file, then local, project, and
+user. `/status` shows which files loaded. All `CLAUDE.md` files
+load together, from broad to specific, so do not leave two files
+disagreeing. From Claude Code v2.1.277, `AGENTS.md` loads when a
+repository has no `CLAUDE.md`.
+
+::: {.callout-note}
+## Personal files stay off Git
+
+`.gitignore` lists `CLAUDE.local.md` and
+`.claude/settings.local.json`. `CLAUDE.md`,
+`.claude/settings.json`, `.claude/skills/`, and `.mcp.json` are
+the files the team shares.
+:::
+
+## Hooks {#sec-claude-hooks}
+
+A hook is a command that runs at a fixed point in the loop. `/hooks`
+lists what is registered. Exit code 2 from `PreToolUse` blocks the
+tool call. Put the JSON in the settings file for the scope you
+chose.
+
+| Event | When it runs |
+|-------|----------------|
+| `SessionStart` | The session begins or resumes |
+| `UserPromptSubmit` | Before Claude sees your prompt |
+| `PreToolUse` | Before a tool runs. Can block it |
+| `PostToolUse` | After a tool succeeds |
+| `Notification` | Claude needs your input |
+| `Stop` | Claude has finished replying |
+
+This hook formats the tree with Ruff after every edit or write,
+which matches the `uv` / Ruff setup in this repository:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{
+        "type": "command",
+        "command": "ruff format ."
+      }]
+    }]
+  }
+}
+```
+
+## Memory {#sec-claude-memory}
+
+`CLAUDE.md` is what you write. Auto memory is what Claude writes.
+`/memory` opens the files. A file can pull others in with `@`:
+
+```markdown
+# Project Notes
+See @README.md for an overview.
+- Testing: @docs/testing.md
+- Mine: @~/.claude/my-notes.md
+```
+
+A rule under `.claude/rules/` can apply only to some paths. This
+one is loaded for Python under `src/api/`:
+
+```markdown
+---
+paths:
+  - "src/api/**/*.py"
+---
+- Validate every request body
+```
+
+`/init` drafts a first `CLAUDE.md` for the repository.
+
+## Spend fewer tokens {#sec-claude-tokens}
+
+Every turn resends the system prompt, the `CLAUDE.md` files and
+rules, the tool schemas, and the chat so far. @fig-token-cost lists
+six ways to cut that cost in any LLM system.
+
+![Six cost-reduction techniques for LLM systems. © ByteByteGo, reproduced for teaching ([source](https://blog.bytebytego.com/)).](token_code_optimisation.jpg){#fig-token-cost fig-alt="Table of six techniques with a workflow sketch each: prompt caching, model routing, batch API, semantic cache, trimming the context, and smaller models."}
+
+| Technique | What it does | In my setup |
+|-----------|--------------|-------------|
+| Prompt caching | Reuses the computation for a prefix that does not change | Automatic. Rules, `CLAUDE.md` and the MCP list stay unchanged during a session |
+| Model routing | Easy requests go to a small model, hard ones to a large model | A `token-budget` rule says which model does what; a Haiku agent does document search |
+| Batch API | Sends many requests as one asynchronous job, at a discount | Not used interactively. Kept for scripted bulk extraction |
+| Semantic cache | Reuses a stored answer for a similar question | `doc-search note`: checked answers, matched by question similarity |
+| Trim the context | Sends only what the next step needs | Path-scoped rules, 3–5 excerpts per search, subagent briefs, `/clear` |
+| Go smaller | Distilled or quantised models for narrow tasks | Haiku for retrieval, a local MiniLM model for embeddings, `/effort low` |
+
+The rest of this section shows each choice. The files are in
+[`python/doc-search/`](https://github.com/bastienchassagnol/Rag-llm-playground/tree/main/python/doc-search).
+
+### What a month costs {#sec-claude-cost}
+
+Claude Code writes every response, with its token counts, to
+`~/.claude/projects/*/*.jsonl`. Over 30 days (25 active days) of
+course and tooling work, one user consumed:
+
+| Token type | 30 days | Share |
+|------------|--------:|------:|
+| Cache reads | 1.94 billion | 97 % |
+| Cache writes | 55 million | 2.7 % |
+| Output | 7.4 million | 0.4 % |
+| Fresh input | 14 thousand | < 0.01 % |
+
+Cache reads are billed at about a tenth of the input price, so
+the raw total of 2 billion overstates the cost. The lesson is
+that the stable prefix is re-read on every turn: a shorter prefix
+and fewer turns save more than shorter prompts. `/usage` gives the
+plan view; this script gives the split by type:
+
+```python
+import collections, glob, json, os
+
+seen, total = set(), collections.Counter()
+for f in glob.glob(os.path.expanduser("~/.claude/projects/**/*.jsonl"), recursive=True):
+    for line in open(f, errors="ignore"):
+        msg = json.loads(line).get("message") or {}
+        if not isinstance(msg, dict) or "usage" not in msg or msg.get("id") in seen:
+            continue
+        seen.add(msg.get("id"))
+        total.update({k: v for k, v in msg["usage"].items() if isinstance(v, int)})
+print(total)
+```
+
+### Rules and models {#sec-claude-routing}
+
+- **Path-scoped rules.** Long user rules (figures, LaTeX, document
+  extraction, symbolic verification) start with `paths:`, so they
+  load only when Claude opens a matching file
+  (@sec-claude-memory). A short index in `~/.claude/CLAUDE.md` says
+  which rule to read when no file triggers it, for example a PDF
+  searched through `doc-search`.
+- **One short rule always on.**
+  [`token-budget.md`](https://github.com/bastienchassagnol/Rag-llm-playground/blob/main/python/doc-search/token-budget.md) routes tasks:
+  Haiku for search and formatting, Sonnet for routine edits, Opus
+  for design, statistical review and synthesis. It also says when
+  to save an answer and why rules must not change mid-session.
+- **A Haiku agent for reading.**
+  [`doc-retriever.md`](https://github.com/bastienchassagnol/Rag-llm-playground/blob/main/python/doc-search/doc-retriever.md) in
+  `~/.claude/agents/` searches one document and returns quoted
+  excerpts and a brief of at most 500 words. With several
+  documents, Claude starts one per file and reads only the briefs.
+
+  ```markdown
+  ---
+  name: doc-retriever
+  tools: Bash, Read, Grep, Glob
+  model: haiku
+  ---
+  ```
+
+- **Smallest code change.** The
+  [Ponytail](https://github.com/DietrichGebert/ponytail) rule (MIT)
+  is scoped to code files. It asks for the shortest complete
+  change and a closing line on what was not checked, which keeps
+  both the diff and the output short.
+- **Effort per model.** `modelSettings` in `~/.claude/settings.json`
+  sets a default effort for each model; `/effort low` overrides it
+  for mechanical edits.
+
+### Retrieval with doc-search {#sec-claude-docsearch}
+
+[`doc_search.py`](https://github.com/bastienchassagnol/Rag-llm-playground/blob/main/python/doc-search/doc_search.py) keeps PDFs, Word,
+PowerPoint, HTML and Markdown files on disk and returns a few
+sourced excerpts instead of whole documents. It runs with
+`uv run --script` and needs Docling (`uv tool install docling`)
+and poppler.
+
+```bash
+doc_search.py index paper.pdf
+doc_search.py search "prior on the dispersion" --source paper.pdf
+doc_search.py search "dispersion" --regex 'theta_?\d' -i
+doc_search.py search "estimand" --whole-section
+doc_search.py note add --source paper.pdf --pages 7-8 \
+  --question "What is the primary estimand?" --answer "..."
+doc_search.py figures paper.pdf --slug smith2024
+```
+
+- **Chunks follow sections.** Docling's hybrid chunker never crosses
+  a heading and caps each chunk at 256 tokens. That is the window
+  of the embedding model (all-MiniLM-L6-v2): the earlier
+  2,000-character chunks, about 500 tokens, had their second half
+  ignored. `--whole-section` prints a hit's full section.
+- **Each excerpt says where it is from.** The output gives `SOURCE`,
+  `PAGES`, `SECTION` (the heading path) and `RANKS`, so a quote can
+  be cited without opening the file.
+- **Meaning, keywords and patterns together.** Three rankings are
+  merged by weighted reciprocal-rank fusion: embeddings (Chroma),
+  BM25 keywords (SQLite FTS5), and match counts for `--regex`. The
+  default weights are 1, 1 and 2, because a pattern you type is a
+  strong signal. Symbols, gene names and citekeys need the regex.
+- **Answers are cached.** After Claude has checked an answer against
+  its excerpts, `note add` stores it. A later search whose question
+  is similar (cosine similarity ≥ 0.90) prints the cached note and
+  stops. Re-indexing a changed file deletes its notes.
+- **Figures come out automatically.** `figures` finds the pages
+  whose text starts a line with "Figure N" or "Fig. N", saves every
+  embedded image with `pdfimages -png -p`, renders those pages at
+  200 dpi with `pdftoppm`, and lists them in
+  `.firecrawl/extract/<slug>/figure-candidates.json`. On a two-page
+  paper (ImmQuant, Frishberg et al. 2016) it found Fig. 1 on
+  page 2. Choosing and describing the figures stays a reading
+  task, done after looking at each image.
+
+Other savings: run `/context` before `/compact`, turn off unused
+servers in `/mcp`, and use `/clear` between unrelated tasks
+(@sec-claude-slash). Long procedures belong in a skill, whose body
+loads only when it runs (@sec-claude-skills).
+
+## Skills {#sec-claude-skills}
+
+A directory with a `SKILL.md` becomes `/name`. Claude also loads
+the skill when the description matches the task. Set
+`disable-model-invocation: true` when the skill should run only
+if you type the command. Older `.claude/commands/*.md` files still
+work. After you add a skill, run `/reload-skills` if the session
+was already open.
+
+```markdown
+---
+name: docstring-doctor
+description: >-
+  Writes Google-style Python docstrings.
+  Use when asked to document code.
+---
+Open with a one-line summary...
+```
+
+The instructions under the front matter are what Claude follows
+each time the skill runs.
+
+## Permissions {#sec-claude-permissions}
+
+`Shift+Tab` cycles `default`, `acceptEdits`, and `plan`, and
+`auto` when that mode is available. Since v2.1.283, most terminal
+and VS Code sessions start in `auto`. The interface labels
+`default` as Manual. `/permissions` edits the rules. Rules are
+checked deny, then ask, then allow. The first match wins. A deny
+rule still holds in `bypassPermissions`.
+
+| Mode | Runs without asking |
+|------|---------------------|
+| `default` | Reads only |
+| `acceptEdits` | Reads, edits, file commands |
+| `plan` | Reads, to draft a plan |
+| `auto` | Everything, with safety checks |
+| `dontAsk` | Pre-approved tools and file reads |
+| `bypassPermissions` | Everything, in isolated VMs |
+
+For this repository, allow the test command, ask before a push,
+and refuse the env file:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(uv run pytest *)"],
+    "ask": ["Bash(git push *)"],
+    "deny": ["Read(./.env)"]
+  }
+}
+```
+
+## MCP servers {#sec-claude-mcp}
+
+MCP connects the session to tools outside the chat. `/mcp` manages
+servers and OAuth logins. Scopes are `local`, `project`, and
+`user`. `local` is the default and stays out of the shared file.
+`project` writes `.mcp.json`, which the team commits. `user`
+follows you across repositories. For a stdio server, `--` comes
+before the process Claude should launch. Point a database server
+at a read-only user.
+
+```bash
+claude mcp add --transport http \
+  notion https://mcp.notion.com/mcp
+claude mcp add --transport stdio \
+  --scope project db \
+  -- npx -y @bytebase/dbhub \
+  --dsn "postgresql://readonly:pw@host/db"
+```
+
+The same stdio form can launch this course's server from the
+repository root:
+
+```bash
+claude mcp add --transport stdio \
+  --scope project course \
+  -- uv run python python/basic-mcp-server/server.py
+```
+
+That server is the one in
+[a minimal MCP server](basic-mcp-server.qmd). List, inspect, and
+remove servers from the shell:
+
+```bash
+claude mcp list
+claude mcp get notion
+claude mcp remove notion
+```
+
+Server prompts show up in the `/` menu as `/server:prompt`.
+
+## Conclusions {#sec-claude-sheet}
+
+The two-page sheet below is Real Python's Claude Code cheat sheet
+([source](https://realpython.com/cheatsheets/claude-code/)). It
+keeps the commands from this chapter on one landscape spread,
+including shortcuts and entries this page does not walk through.
+
+{{< pdf claude-code-cheatsheet.pdf width=100% height=1100 >}}

@@ -19,6 +19,7 @@ on:
       - "prompts/**"
       - "styles/**"
       - "figures/**"
+      - "_extensions/**"
       - ".github/workflows/publish-quarto-book.yml"
 
 name: Quarto Publish

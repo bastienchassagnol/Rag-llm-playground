@@ -22,7 +22,8 @@ the navigation chrome.
 2. **Hosted tools.** ChatGPT companions, a short GPT shortlist, and
    `$` skills
    ([Pre-existing AI tools](tools/chatgpt-companions.qmd)).
-3. **Python.** Tool calling, a minimal MCP server, then
+3. **Python.** Tool calling, a minimal MCP server,
+   [Claude Code](python/claude-code.qmd) in that same tree, then
    [tabular foundation models](python/tabular-foundation-models.qmd).
 4. **R.** A condensed `ellmer` workshop, adapted from Hadley Wickham's
    [A no bullshit guide to LLMs](https://tidydesign.substack.com/p/a-no-bullshit-guide-to-llms)
@@ -71,6 +72,7 @@ install `uv`, `renv`, or a TeX distribution. Lab scripts themselves:
 │   ├── skills/             # e.g. $maths-dollar
 │   └── prompts/            # reusable system prompts
 ├── python/
+│   ├── claude-code.qmd     # Claude Code in this tree
 │   ├── llm-tool-calling/   # lab: provider SDK + tools
 │   └── basic-mcp-server/   # lab: tiny MCP server
 ├── R/

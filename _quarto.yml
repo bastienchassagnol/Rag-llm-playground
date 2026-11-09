@@ -15,6 +15,7 @@ project:
     - tools/chatgpt-companions.qmd
     - python/llm-tool-calling.qmd
     - python/basic-mcp-server.qmd
+    - python/claude-code.qmd
     - python/tabular-foundation-models.qmd
     - R/llm-integration.qmd
     - R/r-vs-python.qmd
@@ -81,6 +82,7 @@ website:
         menu:
           - python/llm-tool-calling.qmd
           - python/basic-mcp-server.qmd
+          - python/claude-code.qmd
           - python/tabular-foundation-models.qmd
       - text: "R"
         menu:
@@ -160,7 +162,7 @@ execute:
   message: false
   warning: false
   error: false
-  freeze: true
+  freeze: false
 
 knitr:
   opts_chunk:

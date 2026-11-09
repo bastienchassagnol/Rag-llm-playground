@@ -66,6 +66,11 @@ data/raw-data/
 # Rendered website (CI publishes the gh-pages branch; do not commit docs/)
 docs
 
+# Claude Code files that belong to one person in this checkout.
+# See python/claude-code.qmd.
+CLAUDE.local.md
+.claude/settings.local.json
+
 # Quarto freeze cache MUST be tracked so GitHub Actions can render
 # without uv/renv. Do not add `_freeze/` here.
 **/.quarto/
